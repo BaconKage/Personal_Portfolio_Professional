@@ -393,3 +393,6 @@
 .hero > .neural-prompt button { background: var(--paper); border-color: #77819a; color: var(--ink); }
 .hero > .neural-prompt button:hover, .hero > .neural-prompt button:focus-visible { background: #244cff; color: white; }
 .hero-art:not([data-ready="true"]) + .neural-prompt { visibility: hidden; }
+.project-zoom { position: fixed; z-index: 55; overflow: hidden; pointer-events: none; visibility: hidden; opacity: 0; transform-origin: center; }
+.project-zoom-title { position: absolute; left: 5%; bottom: 7%; z-index: 1; font-size: clamp(38px, 7vw, 110px); line-height: 1; letter-spacing: -.065em; color: #fff; text-shadow: 0 2px 25px #080e27; }
+.project-hit-area { position: absolute; inset: 0; z-index: 2; cursor: pointer; }

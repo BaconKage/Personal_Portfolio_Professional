@@ -76,3 +76,5 @@ See `QA.md` for the performed visual and technical checks. Browser viewport emul
 ## Neural interaction and additional section motion
 
 The hero network sends periodic activity waves through connected nodes. Clicking the illustration or activating Send a signal launches a new wave; moving the mouse focuses nearby neurons. Activity appears through connection color, travelling signals, soft node halos and a brief ripple. About uses scroll-linked word emphasis, the research symbol rotates gently with scrolling, experience entries arrive in a stagger, and the desktop contact panel expands into view. Reduced motion restores static text and artwork. Smaller labels and supporting text have been enlarged for readability.
+
+Project cards use a shared zoom transition before entering a case study. Homepage cards capture the live WebGL frame; index cards use their local artwork. Other internal navigation keeps the curtain transition. The zoom is disabled under reduced motion.

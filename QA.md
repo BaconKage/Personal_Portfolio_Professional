@@ -68,3 +68,9 @@ The neural hero now sends timed waves along its graph connections. Pointer focus
 After revisiting https://lusion.co/, added scroll-linked word emphasis to About, rotation/scale to the research symbol, staggered experience entries, and an expanding contact panel on desktop. Increased smaller navigation, metadata, controls and supporting copy by about 1–2px. Hero controls stay outside the expanding artwork so they cannot be clipped by its scale.
 
 Desktop 1440 × 900 and mobile 390 × 844 browser checks covered the active hero, keyboard/button activation, About reading layout and mobile experience copy. No horizontal overflow was detected. Reduced motion removes the canvas, hides the visual signal control and restores normal text colors. Lint, TypeScript/production build and all three content tests pass.
+
+## Project-card zoom navigation
+
+All homepage project articles and all five Work-index cards now expand their selected artwork to the viewport before revealing the case study. Homepage artwork is clickable in addition to the existing semantic title/CTA links. A one-frame WebGL copy preserves the visible live world; local posters provide a bounded fallback. Navigation is prefetched, duplicate clicks are guarded, and the temporary overlay clears on completion or timeout. Reduced motion retains direct native Link navigation; modifier clicks, downloads and external links are not intercepted.
+
+Checked MyGym from the desktop homepage, VaniCert from the desktop Work index, and FirstDropAI, BhashaBuddy and Posture Engine from the mobile Work index. All reached their correct case study. Verified the transition overlay is hidden and emptied after completion, and reviewed desktop card composition and the mobile destination. Production build/TypeScript and lint pass.

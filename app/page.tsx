@@ -136,6 +136,7 @@ export default function Home() {
             <div className="project-art">
               <Artwork scene={p.slug} />
             </div>
+            <Link href={`/work/${p.slug}`} className="project-hit-area" aria-hidden="true" tabIndex={-1} />
             <div className="project-heading">
               <p className="eyebrow">{p.category}</p>
               <h3>

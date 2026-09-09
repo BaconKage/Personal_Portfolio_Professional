@@ -100,6 +100,15 @@ function Renderer({
   const [quality, setQuality] = useState(1);
   const [visible, setVisible] = useState<HTMLElement[]>([]);
   const pointer = useRef({ x: 0, y: 0 });
+  const capture = useRef<((canvas: HTMLCanvasElement) => void) | null>(null);
+  useEffect(() => {
+    const request = (event: Event) => {
+      capture.current = (event as CustomEvent<(canvas: HTMLCanvasElement) => void>).detail;
+      invalidate();
+    };
+    window.addEventListener("project-frame", request);
+    return () => { window.removeEventListener("project-frame", request); capture.current = null; };
+  }, [invalidate]);
   const slow = useRef(0);
   const last = useRef(0);
   const bridge = useMemo(() => createTransitionField(), []);
@@ -262,6 +271,12 @@ function Renderer({
         gl.render(bridge.scene, bridge.camera);
         gl.autoClear = true;
       }
+    }
+    // Copy in the rendering frame, before WebGL discards its drawing buffer.
+    if (capture.current) {
+      const copy = capture.current;
+      capture.current = null;
+      copy(gl.domElement);
     }
     if (visible.length) invalidate();
   }, 1);
