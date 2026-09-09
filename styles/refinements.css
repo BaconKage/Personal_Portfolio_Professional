@@ -1,0 +1,181 @@
+.scene-controls {
+  padding: 28px var(--gutter);
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: 1.2fr 1.5fr;
+  gap: 15px 30px;
+  align-items: center;
+}
+.scene-controls > div {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.scene-controls button {
+  background: transparent;
+  border: 1px solid #b6b8af;
+  border-radius: 30px;
+  padding: 12px 17px;
+  font-size: 13px;
+  min-height: 44px;
+}
+.scene-controls button[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+.scene-controls p {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.scene-controls > .eyebrow {
+  grid-column: 1/-1;
+  font-size: 10px;
+  color: var(--muted);
+}
+.diagram-nodes {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  grid-template-columns: 1fr;
+  gap: 28px;
+}
+.diagram-node {
+  min-height: 105px;
+}
+.diagram-parallel .diagram-nodes {
+  grid-template-columns: 1fr 1fr;
+}
+.diagram-parallel .diagram-node:nth-child(n + 3) {
+  grid-column: 1/-1;
+}
+.diagram-node:nth-child(2) b {
+  left: 50%;
+  right: auto;
+}
+.route-curtain {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  background: var(--paper);
+  transform: translateY(100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.route-curtain span {
+  font-size: clamp(60px, 10vw, 150px);
+  letter-spacing: -0.07em;
+  color: var(--blue);
+}
+.project-bottom p {
+  text-shadow: 0 1px 12px #101621;
+}
+.project-bhashabuddy .project-bottom p {
+  text-shadow: none;
+}
+.case-intro,
+.index-heading,
+.case-breadcrumb {
+  position: relative;
+  z-index: 3;
+}
+.case-intro h1,
+.index-heading h1 {
+  scroll-margin-top: 30px;
+}
+.global-canvas canvas {
+  border-radius: 0;
+}
+.project-mygym .project-heading {
+  z-index: 3;
+}
+.project-firstdrop-ai .project-heading {
+  z-index: 3;
+}
+.project-vanicert .project-heading {
+  z-index: 3;
+}
+.project-bhashabuddy .project-heading {
+  z-index: 3;
+}
+.project-cta {
+  min-height: 44px;
+}
+.hero .hero-foot {
+  font-size: 11px;
+}
+.case-overview .text-link {
+  min-height: 44px;
+}
+.footer {
+  font-size: 11px;
+}
+.motion-setting {
+  position: relative;
+  z-index: 3;
+}
+.artwork {
+  object-fit: contain;
+}
+.diagram-node strong {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 767px) {
+  .scene-controls {
+    padding: 24px 20px;
+    display: block;
+  }
+  .scene-controls p {
+    margin: 18px 0 12px;
+    min-height: 42px;
+  }
+  .scene-controls button {
+    font-size: 12px;
+    padding: 10px 14px;
+  }
+  .hero .hero-foot {
+    font-size: 9px;
+  }
+  .footer {
+    font-size: 10px;
+  }
+  .diagram-nodes {
+    grid-template-columns: 1fr;
+  }
+  .diagram-parallel .diagram-nodes {
+    grid-template-columns: 1fr 1fr;
+  }
+  .project-bottom p {
+    max-width: 270px;
+  }
+  .hero-art {
+    right: -24%;
+    width: 135%;
+  }
+  .project-vanicert .project-bottom p {
+    max-width: 275px;
+  }
+}
+.nojs-nav {
+  display: flex;
+  gap: 24px;
+  padding: 18px var(--gutter);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .case-intro,
+  .index-heading {
+    animation: route-reveal 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+  @keyframes route-reveal {
+    from {
+      clip-path: inset(0 0 100%);
+    }
+    to {
+      clip-path: inset(0);
+    }
+  }
+}

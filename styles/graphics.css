@@ -1,0 +1,58 @@
+.global-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none !important;
+}
+.global-canvas * {
+  pointer-events: none !important;
+}
+.project {
+  isolation: auto;
+}
+.project-art {
+  z-index: 0;
+}
+.project[data-ready="true"] .artwork,
+.hero-art[data-ready="true"] .artwork,
+.case-visual[data-ready="true"] .artwork {
+  opacity: 0;
+}
+.case-visual {
+  position: relative;
+}
+.case-visual .illustration-label {
+  z-index: 3;
+}
+.project-bhashabuddy .project-heading h3 a:hover {
+  color: #244cff;
+}
+.motion-setting {
+  padding: 0 var(--gutter) 18px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+.motion-setting select {
+  border: 1px solid #c6c7bd;
+  border-radius: 4px;
+  background: var(--paper);
+  padding: 8px;
+  font-size: 12px;
+}
+.motion-setting label {
+  color: var(--muted);
+}
+html[data-motion="reduced"] {
+  scroll-behavior: auto;
+}
+html[data-motion="reduced"] * {
+  transition: none !important;
+  animation: none !important;
+}
+.global-canvas:empty {
+  display: none;
+}
