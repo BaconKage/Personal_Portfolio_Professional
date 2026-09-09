@@ -61,7 +61,7 @@ export default function Home() {
     <main id="main">
       <section className="hero">
         <div className="hero-topline">
-          <span className="eyebrow">SHUBHANG SRINIVAS VARDA</span>
+          <p className="hero-name">Shubhang <span>Srinivas Varda</span></p>
           <span className="eyebrow location">
             <i /> BENGALURU, INDIA
           </span>

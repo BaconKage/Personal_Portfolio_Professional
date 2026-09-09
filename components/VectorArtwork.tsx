@@ -57,45 +57,17 @@ export default function Artwork({
       </defs>
       {scene === "hero" && (
         <g>
-          {Array.from({ length: 30 }, (_, i) => {
-            const x = (i % 6) * 230 - 20,
-              y = Math.floor(i / 6) * 195 - 15;
-            const d = "M-22-70H22V-22H70V22H22V70H-22V22H-70V-22H-22Z";
-            return (
-              <g
-                key={i}
-                transform={`translate(${x} ${y}) rotate(${i * 37}) scale(${0.85 + (i % 4) * 0.14})`}
-              >
-                <path
-                  d={d}
-                  transform="translate(12 18)"
-                  fill={i % 3 === 0 ? "#152689" : "#424b60"}
-                  stroke="#12151d"
-                  strokeWidth="6"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d={d}
-                  fill={
-                    i % 3 === 0
-                      ? "#244cff"
-                      : i % 3 === 1
-                        ? "#a3b0c4"
-                        : "#d1d7e1"
-                  }
-                  stroke={i % 3 === 0 ? "#5273ff" : "#e3e8ef"}
-                  strokeWidth="5"
-                  strokeLinejoin="round"
-                />
-                <ellipse
-                  rx="13"
-                  ry="17"
-                  fill="#141a26"
-                  stroke="#657795"
-                  strokeWidth="3"
-                />
-              </g>
-            );
+          {Array.from({length: 55}, (_,i) => {
+            const x = 50 + (i % 11)*110 + Math.sin(i*3.7)*35;
+            const y = 120 + Math.floor(i/11)*145 + Math.cos(i*2.1)*55;
+            return <g key={i}>
+              {[1,11,12].filter(n=>i+n<55).map(n=>{
+                const j=i+n, bx=50+(j%11)*110+Math.sin(j*3.7)*35, by=120+Math.floor(j/11)*145+Math.cos(j*2.1)*55;
+                return <path key={n} d={`M${x} ${y} Q${(x+bx)/2+25} ${(y+by)/2-30} ${bx} ${by}`} stroke="#6e99e4" strokeOpacity=".38" strokeWidth="1.4"/>;
+              })}
+              <circle cx={x} cy={y} r="12" fill="#4779ff" opacity=".12"/>
+              <circle cx={x} cy={y} r={3+i%4} fill="#a6ccff"/>
+            </g>;
           })}
         </g>
       )}
@@ -266,3 +238,4 @@ export default function Artwork({
     </svg>
   );
 }
+

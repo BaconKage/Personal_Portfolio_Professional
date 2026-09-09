@@ -38,7 +38,7 @@ async function main() {
     await sharp(Buffer.from(svg))
       .webp({ quality: 88 })
       .toFile(`public/art/${scene}.webp`);
-    if (scene === "hero") fs.copyFileSync("public/art/hero.webp", "public/art/hero-kinetic.webp");
+    if (scene === "hero") fs.copyFileSync("public/art/hero.webp", "public/art/hero-neural.webp");
   }
   for (const [i, glyph] of ["अ", "அ", "అ", "ಅ"].entries()) {
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"><text x="128" y="185" text-anchor="middle" fill="white" font-family="Nirmala UI,sans-serif" font-size="190">${glyph}</text></svg>`;
@@ -50,3 +50,4 @@ main().catch((e) => {
   console.error(e);
   process.exit(1);
 });
+

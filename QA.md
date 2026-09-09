@@ -54,3 +54,9 @@ Replaced the optical-ring hero with an instanced field of rotating connectors, s
 Verified the updated production build at 1440 × 900 and 390 × 844: animated hero and scroll expansion, MyGym entrance, readable project composition, no horizontal overflow, and a live canvas through scrolling. Verified case-study routing and mobile menu-to-work routing: the curtain exits, dialog closes and document scrolling is restored. Reduced motion removes the canvas and pin spacers; returning to System restores graphics. The updated fallback uses a versioned filename to avoid stale optimized artwork.
 
 Lint, production TypeScript/build, all three content tests, and the complete production route/image/404 smoke suite pass. The rebuilt production preview is served on port 3001. Earlier matrix entries describe the preceding implementation; the motion overhaul was visually retested at the two sizes above. Reference motion was reconstructed with original local geometry, not a frame-for-frame reproduction of every Lusion interaction.
+
+## Neural hero and identity refinement
+
+Replaced connector blocks with a responsive neural network and matching static poster. Added a short fading mouse trail, disabled for coarse pointers and reduced motion. Enlarged the full name to a responsive 30–68px and used a two-line name treatment on narrow screens. Artwork now follows the headline in normal flow.
+
+Production browser review at 1440 × 900, 390 × 844, and 1920 × 993 found no horizontal overflow. The settled headline-to-art gaps measured 43.2px, 32px and 56px respectively. Inspected the name and neural scene at all three sizes. Pointer input produced trail coordinates and opacity; the trail subsequently faded to zero. Reduced motion removes both the WebGL canvas and cursor trail. Browser inspection initially hit a usage-limit rejection, then succeeded after continuation. Production build/TypeScript and lint pass.

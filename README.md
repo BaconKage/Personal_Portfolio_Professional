@@ -26,7 +26,7 @@ In a second terminal, run `node scripts/check-routes.mjs`. It checks the product
 
 ## Creative direction
 
-Oversized editorial typography, warm paper, cobalt, and large project-specific environments. MyGym is a connected modular operating system; VaniCert is a waveform passing through an analysis aperture; FirstDropAI is a conversation between two responsive contour fields; BhashaBuddy is an orbit of four Indian scripts; Posture Engine is an articulated joint study. The hero is a continuously rotating field of original beveled connectors, with spring motion, separation, and pointer repulsion. Instancing shares one geometry across 42 desktop forms or 22 on lower quality tiers.
+Oversized editorial typography, warm paper, cobalt, and large project-specific environments. MyGym is a connected modular operating system; VaniCert is a waveform passing through an analysis aperture; FirstDropAI is a conversation between two responsive contour fields; BhashaBuddy is an orbit of four Indian scripts; Posture Engine is an articulated joint study. The hero is an original neural field with 68 nodes (38 on lower quality tiers), curved connections and travelling synaptic signals. Nodes respond to the local mouse position with attraction and illumination. A short SVG cursor trail fades within 650 milliseconds and is disabled for touch and reduced motion. The full name is prominent; the artwork follows the headline in normal flow to preserve its spacing at every viewport.
 
 The artwork is original conceptual illustration, not a product screenshot or live model output. It sits behind semantic titles, descriptions, and links. Case studies distinguish team delivery from individual contribution and a pilot from a production rollout. Factual sources and attribution decisions are recorded in `CONTENT-SOURCES.md`.
 
@@ -70,4 +70,5 @@ Supply the brand-new GitHub repository and final domain. No code or configuratio
 ## Validation scope and limitations
 
 See `QA.md` for the performed visual and technical checks. Browser viewport emulation does not replace testing on a physical iPhone/Android device and Safari. No Lighthouse score, field Core Web Vitals, clinical accuracy, or product usage metrics are claimed. GPU context-failure recovery is implemented but was not induced on the user's graphics device. The site is ready for local review; final hosting, domain, and résumé verification remain publication steps.
+
 
