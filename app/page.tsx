@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import KineticText from "@/components/KineticText";
 import Artwork from "@/components/Artwork";
 import { profile, research } from "@/data/profile";
 
@@ -66,9 +67,14 @@ export default function Home() {
           </span>
         </div>
         <h1>
-          Software with
-          <br />
-          an <span>AI core.</span>
+          <span className="hero-line">
+            <span className="hero-line-inner">Software with</span>
+          </span>
+          <span className="hero-line">
+            <span className="hero-line-inner">
+              an <span>AI core.</span>
+            </span>
+          </span>
         </h1>
         <div className="hero-art" data-scene="hero">
           <Artwork scene="hero" />
@@ -131,7 +137,7 @@ export default function Home() {
               <p className="eyebrow">{p.category}</p>
               <h3>
                 <Link href={`/work/${p.slug}`}>
-                  {p.name}
+                  <KineticText text={p.name} />
                   <span className="sr-only"> case study</span>
                 </Link>
               </h3>

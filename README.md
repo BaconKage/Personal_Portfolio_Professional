@@ -26,7 +26,7 @@ In a second terminal, run `node scripts/check-routes.mjs`. It checks the product
 
 ## Creative direction
 
-Oversized editorial typography, warm paper, cobalt, and large project-specific environments. MyGym is a connected modular operating system; VaniCert is a waveform passing through an analysis aperture; FirstDropAI is a conversation between two responsive contour fields; BhashaBuddy is an orbit of four Indian scripts; Posture Engine is an articulated joint study. The hero is an engineered optical form with a small pointer-responsive vertex deformation.
+Oversized editorial typography, warm paper, cobalt, and large project-specific environments. MyGym is a connected modular operating system; VaniCert is a waveform passing through an analysis aperture; FirstDropAI is a conversation between two responsive contour fields; BhashaBuddy is an orbit of four Indian scripts; Posture Engine is an articulated joint study. The hero is a continuously rotating field of original beveled connectors, with spring motion, separation, and pointer repulsion. Instancing shares one geometry across 42 desktop forms or 22 on lower quality tiers.
 
 The artwork is original conceptual illustration, not a product screenshot or live model output. It sits behind semantic titles, descriptions, and links. Case studies distinguish team delivery from individual contribution and a pilot from a production rollout. Factual sources and attribution decisions are recorded in `CONTENT-SOURCES.md`.
 
@@ -36,13 +36,13 @@ The artwork is original conceptual illustration, not a product screenshot or liv
 - `data/profile.ts` holds identity, experience, and résumé configuration. `data/projects.ts` holds the five case studies and source-backed links.
 - `components/Artwork.tsx` uses `next/image` for local WebP posters. `VectorArtwork.tsx` and `scripts/generate-posters.cjs` preserve the procedural source. Assets are already committed; production builds do not regenerate them or depend on Windows fonts. Regeneration of glyph textures uses Nirmala UI on Windows.
 - One persistent React Three Fiber canvas serves visible DOM regions through scissored Three.js scenes. Each world is lazy loaded. A maximum of two worlds mount at a time. A shared 320-point field interpolates between adjacent project forms on larger, capable screens.
-- GSAP and ScrollTrigger load after motion preferences are resolved. Scoped contexts clean up on route changes. Heading reveals and restrained title parallax use native scrolling. Case-page title reveals do not delay or intercept navigation.
+- GSAP and ScrollTrigger load after motion preferences are resolved. Scoped contexts clean up on route changes. A desktop-only pinned hero expands with native scrolling. Rolling project letters, staggered reveals, title parallax, magnetic links, and an animated mobile menu provide the motion language. Internal page navigation uses a short GSAP curtain before routing; modifier clicks, external links, downloads, and anchors retain native behavior. Mobile scrolling stays unpinned.
 - `SceneControls` provides accessible state buttons and live explanatory text. A case change resets its controls. Controls describe an illustration, not model predictions.
 - `app/layout.tsx` owns local fonts, navigation, JSON-LD, metadata defaults, and progressive graphics. Route metadata adds canonical URLs and social images. `app/error.tsx` uses this installed Next.js version's `retry` API.
 
 ## Performance and accessibility
 
-Rendering wakes for scroll, resize, scene controls, and pointer movement, then sleeps at rest. Hidden tabs stop rendering. Coarse pointers and lower-capability devices use fewer vertices and lower DPR; sustained slow frames reduce quality further. Desktop DPR is capped at 1.75; the lower tier is capped at 1.25 and may drop to 1. Geometry and materials are disposed as scenes unmount. No external environment maps, videos, stock models, analytics scripts, or live AI calls are required.
+Visible worlds animate continuously, including on lower quality tiers. Rendering stops when no world is visible or the tab is hidden. Scroll, resize, controls, and pointer input update the scene composition. Coarse pointers and lower-capability devices use fewer vertices and lower DPR; sustained slow frames reduce quality further. Desktop DPR is capped at 1.75; the lower tier is capped at 1.25 and may drop to 1. Geometry and materials are disposed as scenes unmount. No external environment maps, videos, stock models, analytics scripts, or live AI calls are required.
 
 Posters remain available when JavaScript is absent, motion is reduced, WebGL is unavailable, or the context fails. The system reduced-motion preference always wins. The footer's Motion setting can reduce motion further, persists locally, and removes the canvas entirely. All substantive content and navigation remain in server HTML. Mobile navigation uses a native modal dialog with Escape and focus restoration; a noscript navigation is included. The graphics layer never receives pointer events. Focus rings, skip navigation, native links/buttons, semantic headings, and live control descriptions are present.
 
@@ -70,3 +70,4 @@ Supply the brand-new GitHub repository and final domain. No code or configuratio
 ## Validation scope and limitations
 
 See `QA.md` for the performed visual and technical checks. Browser viewport emulation does not replace testing on a physical iPhone/Android device and Safari. No Lighthouse score, field Core Web Vitals, clinical accuracy, or product usage metrics are claimed. GPU context-failure recovery is implemented but was not induced on the user's graphics device. The site is ready for local review; final hosting, domain, and résumé verification remain publication steps.
+

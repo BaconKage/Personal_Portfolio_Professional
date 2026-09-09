@@ -46,6 +46,7 @@ class Boundary extends Component<
     return { failed: true };
   }
   componentDidCatch() {
+    document.documentElement.dataset.graphicsFallback = "scene-error";
     document
       .querySelectorAll("[data-ready]")
       .forEach((e) => e.removeAttribute("data-ready"));
@@ -99,7 +100,6 @@ function Renderer({
   const [quality, setQuality] = useState(1);
   const [visible, setVisible] = useState<HTMLElement[]>([]);
   const pointer = useRef({ x: 0, y: 0 });
-  const until = useRef(0);
   const slow = useRef(0);
   const last = useRef(0);
   const bridge = useMemo(() => createTransitionField(), []);
@@ -127,7 +127,6 @@ function Renderer({
     setDpr(Math.min(devicePixelRatio, low ? 1.25 : 1.75));
     setQuality(low ? 0.55 : 1);
     function wake() {
-      until.current = performance.now() + 1000;
       invalidate();
     }
     function update() {
@@ -161,6 +160,7 @@ function Renderer({
     }
     function lost(e: Event) {
       e.preventDefault();
+      document.documentElement.dataset.graphicsFallback = "context-lost";
       onFailure();
     }
     function step(e: Event) {
@@ -181,7 +181,6 @@ function Renderer({
     document.addEventListener("visibilitychange", visibility);
     gl.domElement.addEventListener("webglcontextlost", lost);
     update();
-    until.current = performance.now() + 3000;
     return () => {
       ro.disconnect();
       window.removeEventListener("scroll", update);
@@ -237,6 +236,7 @@ function Renderer({
         gl.render(s.scene, s.camera);
         s.element.dataset.ready = "true";
       } catch {
+        document.documentElement.dataset.graphicsFallback = "render-error";
         delete s.element.dataset.ready;
         onFailure();
       }
@@ -263,7 +263,7 @@ function Renderer({
         gl.autoClear = true;
       }
     }
-    if (now < until.current && visible.length) invalidate();
+    if (visible.length) invalidate();
   }, 1);
   return (
     <>

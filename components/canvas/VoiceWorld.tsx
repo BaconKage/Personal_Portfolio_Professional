@@ -36,14 +36,17 @@ export default function VoiceWorld({
     },
     [geo],
   );
+  const motionTime = useRef(0);
   useFrame((_, dt) => {
+    motionTime.current += Math.min(dt, 0.04);
+    const time = motionTime.current;
     if (g.current) {
       g.current.children
         .filter((c) => c.type === "Mesh")
         .forEach((c, i) => {
           c.position.x = THREE.MathUtils.damp(
             c.position.x,
-            -2.4 + step.current * 1.6 + i * 0.12,
+            -2.4 + step.current * 1.6 + i * 0.12 + Math.sin(time * 0.7) * 0.7,
             5,
             dt,
           );
@@ -55,7 +58,7 @@ export default function VoiceWorld({
         dt,
       );
       g.current.rotation.x =
-        0.12 + progress.current * 0.15 + step.current * 0.04;
+        0.12 + progress.current * 0.5 + step.current * 0.04 + time * 0.13;
     }
   });
   return (

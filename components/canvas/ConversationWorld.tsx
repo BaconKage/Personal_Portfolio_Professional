@@ -39,12 +39,16 @@ export default function ConversationWorld({
     },
     [geometries],
   );
+  const motionTime = useRef(0);
   useFrame((_, dt) => {
+    motionTime.current += Math.min(dt, 0.04);
+    const time = motionTime.current;
     ref.current?.children.slice(0, 2).forEach((c, i) => {
       c.position.x = THREE.MathUtils.damp(
         c.position.x,
         (i ? 1 : -1) *
-          (step.current === 1 ? 1.15 : step.current === 2 ? 1.9 : 1.5),
+          ((step.current === 1 ? 1.15 : step.current === 2 ? 1.9 : 1.5) +
+            Math.sin(time * 0.8) * 0.22),
         4,
         dt,
       );
@@ -52,7 +56,7 @@ export default function ConversationWorld({
     if (ref.current)
       ref.current.rotation.y = THREE.MathUtils.damp(
         ref.current.rotation.y,
-        pointer.x * 0.1 + step.current * 0.03,
+        pointer.x * 0.25 + step.current * 0.03 + Math.sin(time * 0.5) * 0.2,
         3,
         dt,
       );

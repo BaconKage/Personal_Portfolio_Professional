@@ -46,3 +46,11 @@ Physical touch devices, Safari/Firefox, network-throttled Lighthouse, field Core
 - Production Chromium reported no warnings or errors during the final homepage/project navigation checks.
 - Selecting VaniCert's Consensus then navigating to FirstDropAI resets to Scenario; browser Back returns to VaniCert with Input selected.
 - Final production checks revisited the 390 × 844 fallback and WebGL Selected Work, plus the 1440 × 900 adjacent-world transition. The shared particle overlay stays behind readable links and text.
+
+## Motion overhaul — 10 September 2026
+
+Replaced the optical-ring hero with an instanced field of rotating connectors, spring separation and pointer repulsion. Visible worlds now animate continuously. Added the expanding desktop hero scroll sequence, rolling project letters, stronger project entrances, magnetic CTAs, mobile menu reveals and internal navigation curtains. Mobile title movement stays within the content gutters; mobile scrolling is unpinned.
+
+Verified the updated production build at 1440 × 900 and 390 × 844: animated hero and scroll expansion, MyGym entrance, readable project composition, no horizontal overflow, and a live canvas through scrolling. Verified case-study routing and mobile menu-to-work routing: the curtain exits, dialog closes and document scrolling is restored. Reduced motion removes the canvas and pin spacers; returning to System restores graphics. The updated fallback uses a versioned filename to avoid stale optimized artwork.
+
+Lint, production TypeScript/build, all three content tests, and the complete production route/image/404 smoke suite pass. The rebuilt production preview is served on port 3001. Earlier matrix entries describe the preceding implementation; the motion overhaul was visually retested at the two sizes above. Reference motion was reconstructed with original local geometry, not a frame-for-frame reproduction of every Lusion interaction.

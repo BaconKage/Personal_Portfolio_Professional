@@ -15,11 +15,17 @@ const locations = [
 export default function MyGymWorld({ progress, pointer, step }: SceneProps) {
   const group = useRef<THREE.Group>(null);
   const modules = useRef<(THREE.Group | null)[]>([]);
+  const motionTime = useRef(0);
   useFrame((_, dt) => {
+    motionTime.current += Math.min(dt, 0.04);
+    const time = motionTime.current;
     if (group.current) {
       group.current.rotation.y = THREE.MathUtils.damp(
         group.current.rotation.y,
-        -0.5 + pointer.x * 0.09,
+        -0.65 +
+          pointer.x * 0.23 +
+          Math.sin(time * 0.4) * 0.14 +
+          (progress.current - 0.5) * 0.6,
         4,
         dt,
       );
@@ -29,7 +35,8 @@ export default function MyGymWorld({ progress, pointer, step }: SceneProps) {
       if (!m) return;
       m.position.y = THREE.MathUtils.damp(
         m.position.y,
-        (1 - assemble) * (i % 2 ? 1.5 : -1.3) +
+        (1 - assemble) * (i % 2 ? 3 : -2.6) +
+          Math.sin(time * 1.15 + i * 0.8) * 0.14 +
           (step.current === 1
             ? i === 4
               ? 1.1

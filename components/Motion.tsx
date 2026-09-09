@@ -5,6 +5,9 @@ import dynamic from "next/dynamic";
 const Graphics = dynamic(() => import("@/components/canvas/Graphics"), {
   ssr: false,
 });
+const RouteTransition = dynamic(() => import("./RouteTransition"), {
+  ssr: false,
+});
 
 export default function Motion() {
   const path = usePathname();
@@ -37,63 +40,31 @@ export default function Motion() {
     if (reduced) return;
     let dispose = () => {};
     let cancelled = false;
-    Promise.all([import("gsap"), import("gsap/ScrollTrigger")])
-      .then(([{ gsap }, { ScrollTrigger }]) => {
+    let breakpoint: MediaQueryList | undefined;
+    let remount = () => {};
+    import("./choreography")
+      .then(({ mountChoreography }) => {
         if (cancelled) return;
-        gsap.registerPlugin(ScrollTrigger);
-        const ctx = gsap.context(() => {
-          gsap.utils
-            .toArray<HTMLElement>(
-              ".section-heading h2,.about h2,.research h2,.case-context h2",
-            )
-            .forEach((el) => {
-              gsap.from(el, {
-                y: 28,
-                duration: 0.7,
-                ease: "power3.out",
-                scrollTrigger: { trigger: el, start: "top 94%", once: true },
-              });
-            });
-          if (innerWidth >= 768) {
-            document.querySelectorAll<HTMLElement>(".project").forEach((el) => {
-              const heading = el.querySelector(".project-heading");
-              gsap.fromTo(
-                heading,
-                { y: 35 },
-                {
-                  y: -25,
-                  ease: "none",
-                  scrollTrigger: {
-                    trigger: el,
-                    start: "top bottom",
-                    end: "bottom top",
-                    scrub: 0.5,
-                  },
-                },
-              );
-            });
-          }
-          const titles = document.querySelectorAll(
-            ".case-intro h1,.index-heading h1",
-          );
-          if (titles.length)
-            gsap.fromTo(
-              titles,
-              { y: 18 },
-              { y: 0, duration: 0.55, ease: "power3.out" },
-            );
-        });
-        dispose = () => ctx.revert();
+        remount = () => {
+          dispose();
+          dispose = mountChoreography();
+        };
+        remount();
+        breakpoint = matchMedia("(min-width: 900px)");
+        breakpoint.addEventListener("change", remount);
       })
       .catch(() => {});
     return () => {
       cancelled = true;
+      breakpoint?.removeEventListener("change", remount);
       dispose();
     };
   }, [path, reduced]);
   return (
     <>
       {graphics && <Graphics />}
+      {!reduced && <RouteTransition reduced={reduced} />}
+      {!reduced && <div className="scroll-progress" aria-hidden="true" />}
       <div className="motion-setting">
         <label htmlFor="motion-mode">Motion</label>
         <select

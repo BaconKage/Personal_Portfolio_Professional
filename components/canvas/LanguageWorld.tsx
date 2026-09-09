@@ -40,7 +40,10 @@ export default function LanguageWorld({ pointer, step }: SceneProps) {
     return g;
   }, []);
   useEffect(() => () => ring.dispose(), [ring]);
+  const motionTime = useRef(0);
   useFrame((_, dt) => {
+    motionTime.current += Math.min(dt, 0.04);
+    const time = motionTime.current;
     ref.current?.children
       .filter((c) => c.type === "Mesh")
       .slice(0, 4)
@@ -57,7 +60,10 @@ export default function LanguageWorld({ pointer, step }: SceneProps) {
     if (ref.current)
       ref.current.rotation.z = THREE.MathUtils.damp(
         ref.current.rotation.z,
-        -0.17 + pointer.x * 0.05 + step.current * 0.05,
+        -0.17 +
+          pointer.x * 0.12 +
+          step.current * 0.05 +
+          Math.sin(time * 0.5) * 0.12,
         4,
         dt,
       );

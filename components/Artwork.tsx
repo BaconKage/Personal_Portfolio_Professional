@@ -18,7 +18,7 @@ export default function Artwork({
 }) {
   return (
     <Image
-      src={`/art/${scene}.webp`}
+      src={`/art/${scene === "hero" ? "hero-kinetic" : scene}.webp`}
       alt=""
       aria-hidden="true"
       width={1200}

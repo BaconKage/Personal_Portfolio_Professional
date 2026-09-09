@@ -56,35 +56,47 @@ export default function Artwork({
         </linearGradient>
       </defs>
       {scene === "hero" && (
-        <g transform="translate(600 395) rotate(-28) scale(1.38)">
-          {Array.from({ length: 65 }, (_, i) => {
-            const a = (i / 64) * Math.PI * 2;
+        <g>
+          {Array.from({ length: 30 }, (_, i) => {
+            const x = (i % 6) * 230 - 20,
+              y = Math.floor(i / 6) * 195 - 15;
+            const d = "M-22-70H22V-22H70V22H22V70H-22V22H-70V-22H-22Z";
             return (
-              <ellipse
+              <g
                 key={i}
-                rx={180 + Math.sin(a) * 45}
-                ry={240 + Math.cos(a) * 32}
-                transform={`rotate(${i * 2.77})`}
-                stroke={i % 5 === 0 ? "#244cff" : "#294879"}
-                strokeWidth={i % 5 === 0 ? 2 : 1}
-                opacity={0.38 + (i % 5) * 0.1}
-              />
+                transform={`translate(${x} ${y}) rotate(${i * 37}) scale(${0.85 + (i % 4) * 0.14})`}
+              >
+                <path
+                  d={d}
+                  transform="translate(12 18)"
+                  fill={i % 3 === 0 ? "#152689" : "#424b60"}
+                  stroke="#12151d"
+                  strokeWidth="6"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d={d}
+                  fill={
+                    i % 3 === 0
+                      ? "#244cff"
+                      : i % 3 === 1
+                        ? "#a3b0c4"
+                        : "#d1d7e1"
+                  }
+                  stroke={i % 3 === 0 ? "#5273ff" : "#e3e8ef"}
+                  strokeWidth="5"
+                  strokeLinejoin="round"
+                />
+                <ellipse
+                  rx="13"
+                  ry="17"
+                  fill="#141a26"
+                  stroke="#657795"
+                  strokeWidth="3"
+                />
+              </g>
             );
           })}
-          <ellipse
-            rx="111"
-            ry="172"
-            stroke="#244cff"
-            strokeWidth="20"
-            transform="rotate(28)"
-          />
-          <ellipse
-            rx="102"
-            ry="164"
-            stroke="#d9e1ff"
-            strokeWidth="1.5"
-            transform="rotate(28)"
-          />
         </g>
       )}
       {scene === "mygym" && (
