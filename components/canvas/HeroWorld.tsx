@@ -1,9 +1,30 @@
+/* Shader uniforms are mutable GPU state, updated by R3F outside React rendering. */
+/* eslint-disable react-hooks/immutability */
 import { useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import type { SceneProps } from "./types";
 export default function HeroWorld({ pointer, progress, quality }: SceneProps) {
   const group = useRef<THREE.Group>(null);
+  const lens = useMemo(
+    () =>
+      new THREE.ShaderMaterial({
+        transparent: true,
+        depthWrite: false,
+        uniforms: {
+          focus: { value: new THREE.Vector2() },
+          travel: { value: 0 },
+        },
+        vertexShader: `uniform vec2 focus; uniform float travel; varying float light;
+      void main(){ vec3 p=position; float a=atan(p.y,p.x);
+        float wave=sin(a*6.0+travel*3.0+focus.x)*0.045;
+        p.z+=wave*(1.0+focus.y); light=0.45+0.18*sin(a+travel);
+        gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.0); }`,
+        fragmentShader: `varying float light; void main(){gl_FragColor=vec4(0.025,0.08,0.32,light);}`,
+      }),
+    [],
+  );
+  useEffect(() => () => lens.dispose(), [lens]);
   const lines = useMemo(() => {
     const points: number[] = [];
     const count = Math.round(65 * quality) + 25;
@@ -32,6 +53,8 @@ export default function HeroWorld({ pointer, progress, quality }: SceneProps) {
     [lines],
   );
   useFrame((_, dt) => {
+    lens.uniforms.focus.value.set(pointer.x, pointer.y);
+    lens.uniforms.travel.value = progress.current;
     if (group.current) {
       group.current.rotation.y = THREE.MathUtils.damp(
         group.current.rotation.y,
@@ -50,9 +73,7 @@ export default function HeroWorld({ pointer, progress, quality }: SceneProps) {
   });
   return (
     <group ref={group} rotation={[0.18, 0.55, -0.4]} scale={1.16}>
-      <lineSegments geometry={lines}>
-        <lineBasicMaterial color="#203e96" transparent opacity={0.58} />
-      </lineSegments>
+      <lineSegments geometry={lines} material={lens} />
       <mesh>
         <torusGeometry args={[1.12, 0.085, 16, 160]} />
         <meshStandardMaterial

@@ -65,7 +65,7 @@ export default async function CaseStudy({
             CONCEPTUAL SYSTEM STUDY / {p.number}
           </span>
         </div>
-        <SceneControls id={p.slug} />
+        <SceneControls key={p.slug} id={p.slug} />
         <section className="case-overview">
           <div>
             <span className="eyebrow">ROLE</span>

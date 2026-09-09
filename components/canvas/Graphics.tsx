@@ -16,6 +16,7 @@ import { usePathname } from "next/navigation";
 import * as THREE from "three";
 import type { SceneId } from "@/components/Artwork";
 import type { SceneProps } from "./types";
+import { createTransitionField } from "./TransitionField";
 const worlds: Record<
   SceneId,
   React.LazyExoticComponent<React.ComponentType<SceneProps>>
@@ -101,6 +102,8 @@ function Renderer({
   const until = useRef(0);
   const slow = useRef(0);
   const last = useRef(0);
+  const bridge = useMemo(() => createTransitionField(), []);
+  useEffect(() => () => bridge.dispose(), [bridge]);
   const slots = useMemo(
     () =>
       elements.map((element) => ({
@@ -239,6 +242,27 @@ function Renderer({
       }
     }
     gl.setScissorTest(false);
+    if (innerWidth >= 768 && quality > 0.5) {
+      const projects = slots.filter((s) =>
+        s.element.classList.contains("project"),
+      );
+      for (let i = 0; i < projects.length - 1; i++) {
+        const seam = projects[i + 1].element.getBoundingClientRect().top;
+        const t = 1 - (seam - height * 0.25) / (height * 0.5);
+        if (t <= 0 || t >= 1) continue;
+        bridge.update(
+          projects[i].id,
+          projects[i + 1].id,
+          t,
+          innerWidth / height,
+        );
+        gl.setViewport(0, 0, innerWidth, height);
+        gl.clearDepth();
+        gl.autoClear = false;
+        gl.render(bridge.scene, bridge.camera);
+        gl.autoClear = true;
+      }
+    }
     if (now < until.current && visible.length) invalidate();
   }, 1);
   return (

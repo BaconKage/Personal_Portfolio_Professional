@@ -56,7 +56,7 @@ export default function Artwork({
         </linearGradient>
       </defs>
       {scene === "hero" && (
-        <g transform="translate(650 395) rotate(-28)">
+        <g transform="translate(600 395) rotate(-28) scale(1.38)">
           {Array.from({ length: 65 }, (_, i) => {
             const a = (i / 64) * Math.PI * 2;
             return (
@@ -65,7 +65,7 @@ export default function Artwork({
                 rx={180 + Math.sin(a) * 45}
                 ry={240 + Math.cos(a) * 32}
                 transform={`rotate(${i * 2.77})`}
-                stroke={`url(#${i % 5 === 0 ? grad : metal})`}
+                stroke={i % 5 === 0 ? "#244cff" : "#294879"}
                 strokeWidth={i % 5 === 0 ? 2 : 1}
                 opacity={0.38 + (i % 5) * 0.1}
               />
@@ -74,7 +74,7 @@ export default function Artwork({
           <ellipse
             rx="111"
             ry="172"
-            stroke={`url(#${grad})`}
+            stroke="#244cff"
             strokeWidth="20"
             transform="rotate(28)"
           />

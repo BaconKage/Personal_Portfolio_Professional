@@ -9,6 +9,14 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Selected work",
     url: "/work",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "Shubhang Srinivas Varda — Selected work",
+      },
+    ],
     description: "Five projects across full-stack software and applied AI.",
   },
   description:
