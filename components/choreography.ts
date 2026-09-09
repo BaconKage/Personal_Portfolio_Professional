@@ -127,6 +127,23 @@ export function mountChoreography() {
     const caseTitles = document.querySelectorAll(
       ".case-intro h1,.index-heading h1",
     );
+    const readingWords = document.querySelectorAll(".reading-word");
+    if (readingWords.length) gsap.fromTo(readingWords, { color: "#686a62" }, {
+      color: "#111315", stagger: 0.15, ease: "none",
+      scrollTrigger: { trigger: ".about-copy", start: "top 82%", end: "top 35%", scrub: .5 },
+    });
+    if (document.querySelector(".research-mark")) gsap.fromTo(".research-mark", { rotation: -28, scale: .7 }, {
+      rotation: 28, scale: 1.12, ease: "none",
+      scrollTrigger: { trigger: ".research", start: "top bottom", end: "bottom top", scrub: 1 },
+    });
+    document.querySelectorAll(".experience-row").forEach(el => {
+      gsap.from(el.children, { y: 35, opacity: 0, stagger: .12, duration: .8, ease: "power3.out",
+        scrollTrigger: { trigger: el, start: "top 88%", once: true } });
+    });
+    if (desktop && document.querySelector(".contact")) gsap.from(".contact", {
+      borderRadius: "100px 100px 0 0", scale: .94, transformOrigin: "center bottom",
+      scrollTrigger: { trigger: ".contact", start: "top 95%", end: "top 20%", scrub: 1 },
+    });
     if (caseTitles.length)
       gsap.from(caseTitles, {
         yPercent: 65,

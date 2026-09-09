@@ -60,3 +60,11 @@ Lint, production TypeScript/build, all three content tests, and the complete pro
 Replaced connector blocks with a responsive neural network and matching static poster. Added a short fading mouse trail, disabled for coarse pointers and reduced motion. Enlarged the full name to a responsive 30–68px and used a two-line name treatment on narrow screens. Artwork now follows the headline in normal flow.
 
 Production browser review at 1440 × 900, 390 × 844, and 1920 × 993 found no horizontal overflow. The settled headline-to-art gaps measured 43.2px, 32px and 56px respectively. Inspected the name and neural scene at all three sizes. Pointer input produced trail coordinates and opacity; the trail subsequently faded to zero. Reduced motion removes both the WebGL canvas and cursor trail. Browser inspection initially hit a usage-limit rejection, then succeeded after continuation. Production build/TypeScript and lint pass.
+
+## Thinking-network and readability pass
+
+The neural hero now sends timed waves along its graph connections. Pointer focus brightens nearby nodes; clicking the artwork or the keyboard-accessible Send a signal button launches a propagation wave and ripple. Vertex colors and instanced glow shells show activity without adding postprocessing. Autonomous waves occur every 4.5 seconds. This remains an illustrative network, not an AI model output.
+
+After revisiting https://lusion.co/, added scroll-linked word emphasis to About, rotation/scale to the research symbol, staggered experience entries, and an expanding contact panel on desktop. Increased smaller navigation, metadata, controls and supporting copy by about 1–2px. Hero controls stay outside the expanding artwork so they cannot be clipped by its scale.
+
+Desktop 1440 × 900 and mobile 390 × 844 browser checks covered the active hero, keyboard/button activation, About reading layout and mobile experience copy. No horizontal overflow was detected. Reduced motion removes the canvas, hides the visual signal control and restores normal text colors. Lint, TypeScript/production build and all three content tests pass.

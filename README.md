@@ -72,3 +72,7 @@ Supply the brand-new GitHub repository and final domain. No code or configuratio
 See `QA.md` for the performed visual and technical checks. Browser viewport emulation does not replace testing on a physical iPhone/Android device and Safari. No Lighthouse score, field Core Web Vitals, clinical accuracy, or product usage metrics are claimed. GPU context-failure recovery is implemented but was not induced on the user's graphics device. The site is ready for local review; final hosting, domain, and résumé verification remain publication steps.
 
 
+
+## Neural interaction and additional section motion
+
+The hero network sends periodic activity waves through connected nodes. Clicking the illustration or activating Send a signal launches a new wave; moving the mouse focuses nearby neurons. Activity appears through connection color, travelling signals, soft node halos and a brief ripple. About uses scroll-linked word emphasis, the research symbol rotates gently with scrolling, experience entries arrive in a stagger, and the desktop contact panel expands into view. Reduced motion restores static text and artwork. Smaller labels and supporting text have been enlarged for readability.

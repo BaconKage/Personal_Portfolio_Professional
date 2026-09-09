@@ -359,3 +359,37 @@
 .hero-name span { white-space: nowrap; }
 .hero-topline .location { flex-shrink: 0; }
 @media (max-width: 599px) { .hero-name { font-size: clamp(32px, 8.6vw, 48px); } .hero-name span { display: block; } }
+/* Smaller labels grow without competing with the display typography. */
+.eyebrow, .project-top, .project-heading > p { font-size: 13px; line-height: 1.55; }
+.nav-role { font-size: 12px; }
+.desktop-nav, .round-link, .project-cta, .text-link { font-size: 16px; }
+.hero .hero-foot, .footer { font-size: 12px; line-height: 1.6; }
+.hero-bottom p { font-size: 18px; }
+.section-heading > p, .experience-row p, .personal-line p { font-size: 17px; }
+.about-copy .small-copy, .experience-row div > span, .recognition p { font-size: 15px; }
+.scene-controls button, .scene-controls p { font-size: 15px; }
+.scene-controls > .eyebrow { font-size: 12px; }
+.motion-setting, .motion-setting select { font-size: 13px; }
+.case-breadcrumb, .case-meta, .illustration-label { font-size: 13px; }
+.neural-prompt { position: absolute; inset: auto 24px 20px; display: flex; align-items: center; justify-content: space-between; gap: 14px; z-index: 3; color: #d4e6ff; }
+.neural-prompt > span:first-child { font: 11px var(--font-mono); letter-spacing: .06em; display: flex; align-items: center; gap: 10px; }
+.neural-prompt i { width: 4px; height: 4px; border-radius: 50%; background: #9dc6ff; }
+.neural-prompt button { border: 1px solid #7489b1; color: #e1edff; background: #151e32e8; padding: 12px 17px; min-height: 44px; border-radius: 30px; font-size: 14px; }
+.neural-prompt button:hover, .neural-prompt button:focus-visible { background: #244cff; }
+.hero-art:not([data-ready="true"]) .neural-prompt { visibility: hidden; }
+.reading-word { display: inline; }
+.research-mark { display: inline-block; transform-origin: center; }
+@media (max-width: 767px) {
+  .eyebrow, .project-top, .project-heading > p { font-size: 12px; }
+  .hero .hero-foot, .footer { font-size: 11px; }
+  .hero-bottom p { font-size: 16px; }
+  .hero .hero-foot { gap: 16px; flex-wrap: wrap; }
+  .neural-prompt { inset: auto 15px 15px; }
+  .neural-prompt > span:first-child { display: none; }
+  .neural-prompt button { margin-left: auto; }
+}
+/* Controls stay in the reading flow while the artwork expands beyond its frame. */
+.hero > .neural-prompt { position: relative; inset: auto; margin-top: 18px; color: var(--ink); }
+.hero > .neural-prompt button { background: var(--paper); border-color: #77819a; color: var(--ink); }
+.hero > .neural-prompt button:hover, .hero > .neural-prompt button:focus-visible { background: #244cff; color: white; }
+.hero-art:not([data-ready="true"]) + .neural-prompt { visibility: hidden; }

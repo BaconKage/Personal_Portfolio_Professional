@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import KineticText from "@/components/KineticText";
+import NeuralPrompt from "@/components/NeuralPrompt";
+import ReadingText from "@/components/ReadingText";
 import Artwork from "@/components/Artwork";
 import { profile, research } from "@/data/profile";
 
@@ -79,6 +81,7 @@ export default function Home() {
         <div className="hero-art" data-scene="hero">
           <Artwork scene="hero" />
         </div>
+        <NeuralPrompt />
         <div className="hero-bottom">
           <p>
             Full-Stack & AI Engineer.
@@ -168,9 +171,7 @@ export default function Home() {
           </h2>
           <div className="about-copy">
             <p>
-              I’m Shubhang. I work where applied AI meets the everyday reality
-              of building software: the data, the interface, and the things that
-              can go wrong between them.
+              <ReadingText text="I’m Shubhang. I work where applied AI meets the everyday reality of building software: the data, the interface, and the things that can go wrong between them." />
             </p>
             <p>
               That takes me from gym operations to clinical conversations, voice
