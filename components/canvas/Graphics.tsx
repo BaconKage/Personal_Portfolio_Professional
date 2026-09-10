@@ -21,6 +21,7 @@ const worlds: Record<
   SceneId,
   React.LazyExoticComponent<React.ComponentType<SceneProps>>
 > = {
+  portal: lazy(() => import("./PortalWorld")),
   hero: lazy(() => import("./HeroWorld")),
   mygym: lazy(() => import("./MyGymWorld")),
   vanicert: lazy(() => import("./VoiceWorld")),

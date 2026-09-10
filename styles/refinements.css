@@ -396,3 +396,46 @@
 .project-zoom { position: fixed; z-index: 55; overflow: hidden; pointer-events: none; visibility: hidden; opacity: 0; transform-origin: center; }
 .project-zoom-title { position: absolute; left: 5%; bottom: 7%; z-index: 1; font-size: clamp(38px, 7vw, 110px); line-height: 1; letter-spacing: -.065em; color: #fff; text-shadow: 0 2px 25px #080e27; }
 .project-hit-area { position: absolute; inset: 0; z-index: 2; cursor: pointer; }
+/* A spatial interlude connects the project stories to the invitation to collaborate. */
+.discipline-band { margin: -30px calc(-1 * var(--gutter)) 100px; padding: 35px 0; overflow: hidden; border-block: 1px solid var(--line); }
+.discipline-band > div { white-space: nowrap; width: max-content; font-size: clamp(42px, 7.4vw, 120px); line-height: 1.13; letter-spacing: -.055em; font-weight: 500; }
+.discipline-band > div + div { color: transparent; -webkit-text-stroke: 1px #72766e; }
+.signal-journey { position: relative; height: 100svh; min-height: 650px; background: #050914; color: #e5edff; }
+html[data-motion="system"] .signal-journey { height: 210svh; }
+.signal-stage { position: sticky; top: 0; height: 100svh; min-height: 650px; overflow: hidden; background: radial-gradient(ellipse at center,#0b2150 0%,#060c20 38%,#040711 75%); }
+.signal-overlay { position: sticky; top: 0; height: 100svh; min-height: 650px; margin-top: -100svh; z-index: 3; pointer-events: none; padding: 36px var(--gutter); display: flex; flex-direction: column; justify-content: space-between; }
+.signal-overlay a,.signal-overlay button { pointer-events: auto; }
+.signal-top,.signal-bottom { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.signal-top a { font-size: 14px; padding: 12px 0; }
+.signal-copy { position: relative; text-align: center; padding: 25px 0; }
+.signal-copy h2,.signal-arrival { margin: 0; font-size: clamp(64px, 10vw, 156px); line-height: .96; font-weight: 450; letter-spacing: -.065em; text-shadow: 0 4px 45px #020716; }
+.signal-copy em { font-style: normal; color: #a7bdff; }
+.signal-arrival { position: absolute; inset: 25px 0 auto; opacity: 0; }
+.signal-bottom p { font-size: 16px; line-height: 1.65; }
+.signal-modes { display: flex; gap: 8px; }
+.signal-modes button { min-height: 46px; border: 1px solid #6b7ea9; border-radius: 30px; background: #070e20dd; color: #c7d9ff; padding: 12px 22px; font-size: 15px; }
+.signal-modes button[aria-pressed="true"] { background: #d6e2ff; color: #101c38; border-color: #d6e2ff; }
+.signal-modes span { margin-left: 12px; }
+.signal-meter { position: absolute; bottom: 0; left: 0; width: 100%; height: 3px; background: #263960; }
+.signal-meter span { display: block; height: 100%; background: #8cadff; transform-origin: left; transform: scaleX(0); }
+.portal-poster { position: absolute; inset: 0; }
+.portal-poster i { position: absolute; left: 50%; top: 50%; translate: -50% -50%; border: 1px solid #7299ff66; border-radius: 43%; box-shadow: 0 0 24px #2549d233; }
+.signal-stage[data-ready="true"] .portal-poster { opacity: 0; }
+.signal-journey:has(.signal-stage:not([data-ready="true"])) .signal-modes { visibility: hidden; }
+@media (max-width: 767px) {
+  .discipline-band { margin-bottom: 60px; }
+  html[data-motion="system"] .signal-journey { height: 160svh; }
+  .signal-stage,.signal-overlay { min-height: 0; }
+  .signal-overlay { padding: 24px 20px; }
+  .signal-top { align-items: flex-start; }
+  .signal-top .eyebrow { max-width: 145px; }
+  .signal-top a { padding-top: 0; font-size: 13px; }
+  .signal-bottom { flex-direction: column; align-items: flex-start; }
+  .signal-copy h2,.signal-arrival { font-size: 16vw; }
+}
+html[data-motion="reduced"] .signal-arrival { display: none; }
+@media (prefers-reduced-motion: reduce) { .signal-arrival { display:none; } }
+.portal-poster i { background: transparent; }
+.signal-copy { text-align: left; }
+.signal-copy h2,.signal-arrival { font-size: clamp(64px, 8.5vw, 138px); }
+@media (max-width: 767px) { .signal-copy { text-align: center; } .signal-copy h2,.signal-arrival { font-size: 16vw; } }

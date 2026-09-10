@@ -3,6 +3,7 @@ import Link from "next/link";
 import KineticText from "@/components/KineticText";
 import NeuralPrompt from "@/components/NeuralPrompt";
 import ReadingText from "@/components/ReadingText";
+import SignalJourney from "@/components/SignalJourney";
 import Artwork from "@/components/Artwork";
 import { profile, research } from "@/data/profile";
 
@@ -163,6 +164,7 @@ export default function Home() {
         </Link>
       </section>
       <section className="about section-pad" id="about">
+        <div className="discipline-band" aria-hidden="true"><div>ENGINEERING · INTELLIGENCE · INTERACTION ·</div><div>IDEAS INTO SYSTEMS · SYSTEMS INTO IMPACT ·</div></div>
         <span className="eyebrow">02 / THE PERSON BEHIND THE SYSTEMS</span>
         <div className="about-main">
           <h2>
@@ -275,6 +277,7 @@ export default function Home() {
           </p>
         </div>
       </section>
+      <SignalJourney />
       <section className="contact section-pad" id="contact">
         <span className="eyebrow">
           <i /> OPEN TO GOOD CONVERSATIONS

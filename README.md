@@ -78,3 +78,7 @@ See `QA.md` for the performed visual and technical checks. Browser viewport emul
 The hero network sends periodic activity waves through connected nodes. Clicking the illustration or activating Send a signal launches a new wave; moving the mouse focuses nearby neurons. Activity appears through connection color, travelling signals, soft node halos and a brief ripple. About uses scroll-linked word emphasis, the research symbol rotates gently with scrolling, experience entries arrive in a stagger, and the desktop contact panel expands into view. Reduced motion restores static text and artwork. Smaller labels and supporting text have been enlarged for readability.
 
 Project cards use a shared zoom transition before entering a case study. Homepage cards capture the live WebGL frame; index cards use their local artwork. Other internal navigation keeps the curtain transition. The zoom is disabled under reduced motion.
+
+## Spatial passage
+
+The original SignalJourney section, before Contact, uses the shared canvas for a scroll-through particle tunnel and a selectable orbit formation. It lazy-loads PortalWorld, uses two draw calls (points and line segments), and follows existing quality tiers. The CSS spiral remains available without WebGL. Reduced motion collapses the passage to one viewport and hides its visual mode controls. Kinetic type bands between Selected Work and About are driven only by scrolling. Reference review: https://lusion.co/ and https://lusion.co/about/; all geometry and compositions here are original.

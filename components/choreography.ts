@@ -128,6 +128,16 @@ export function mountChoreography() {
       ".case-intro h1,.index-heading h1",
     );
     const readingWords = document.querySelectorAll(".reading-word");
+    const bands = document.querySelectorAll(".discipline-band > div");
+    bands.forEach((el,i) => gsap.fromTo(el,{xPercent:i ? -20 : 0},{xPercent:i ? 0 : -20,ease:"none",
+      scrollTrigger:{trigger:".discipline-band",start:"top bottom",end:"bottom top",scrub:1}}));
+    const journey = document.querySelector(".signal-journey");
+    if(journey) {
+      const flight = gsap.timeline({scrollTrigger:{trigger:journey,start:"top top",end:"bottom bottom",scrub:.65}});
+      flight.to(".signal-copy h2",{y:-55,opacity:0,duration:.22},.34)
+        .fromTo(".signal-arrival",{y:60,opacity:0,scale:.88},{y:0,opacity:1,scale:1,duration:.22},.45)
+        .fromTo(".signal-meter span",{scaleX:0},{scaleX:1,duration:1,ease:"none"},0);
+    }
     if (readingWords.length) gsap.fromTo(readingWords, { color: "#686a62" }, {
       color: "#111315", stagger: 0.15, ease: "none",
       scrollTrigger: { trigger: ".about-copy", start: "top 82%", end: "top 35%", scrub: .5 },
@@ -209,3 +219,4 @@ export function mountChoreography() {
     ctx.revert();
   };
 }
+

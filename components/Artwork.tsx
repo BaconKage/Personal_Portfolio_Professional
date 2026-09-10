@@ -1,5 +1,6 @@
 import Image from "next/image";
 export type SceneId =
+  | "portal"
   | "hero"
   | "mygym"
   | "vanicert"
