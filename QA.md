@@ -112,3 +112,9 @@ Lint and production build/TypeScript pass. Verified the rebuilt port-3001 previe
 Added a shared GitHub/LinkedIn link treatment to the hero footer, contact section, and mobile menu's Elsewhere row. Hero links arrive with the ignition's supporting copy. Text links use the existing color palette, an underline reveal, and subtle diagonal arrow movement on hover/focus. Each opens the owner's exact supplied URL in a new tab with noopener/noreferrer and a screen-reader hint.
 
 Reviewed the desktop hero at 1440 × 900 and mobile layout/menu at 390 × 844. Confirmed all six rendered link destinations match the supplied profiles, mobile link hit areas are 44px tall, and the page has no horizontal overflow. Lint and production build/TypeScript pass.
+
+## GitHub and Vercel handoff
+
+Prepared the new `BaconKage/Personal_Portfolio_Professional` repository for owner-managed deployment. Pinned Node.js to 22.x in the package manifest and lockfile, ignored local Vercel metadata, and documented the exact import settings and optional custom-domain environment variable. All existing commit authors and committers use the owner's Git identity, with no assistant co-author trailers. No common credential patterns were found in tracked text files.
+
+On Node.js 22.22.3, lint, all three content tests, the production build/TypeScript check, and the full production route/image/404 smoke suite pass. Vercel's hosted build has not been run; deployment remains with the owner.

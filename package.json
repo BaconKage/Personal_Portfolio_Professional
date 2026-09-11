@@ -11,7 +11,7 @@
     "test": "node --test tests/content.test.mjs"
   },
   "engines": {
-    "node": ">=22.0.0"
+    "node": "22.x"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",

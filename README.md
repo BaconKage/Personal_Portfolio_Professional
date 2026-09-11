@@ -1,6 +1,6 @@
 # Shubhang Srinivas Varda — immersive portfolio
 
-A new Next.js application built in `C:\Lusion Portfolio`. The original `BaconKage/Personal_Portfolio` repository was used only as a factual reference. This repository has local milestone commits, no remote, and has not been pushed or deployed.
+A standalone Next.js portfolio for Shubhang Srinivas Varda, maintained at [BaconKage/Personal_Portfolio_Professional](https://github.com/BaconKage/Personal_Portfolio_Professional). It was built in `C:\Lusion Portfolio` with milestone history preserved. The original `BaconKage/Personal_Portfolio` repository was used only as a read-only factual reference. Hosting is managed by the owner.
 
 ## Run locally
 
@@ -52,24 +52,38 @@ Posters remain available when JavaScript is absent, motion is reduced, WebGL is 
 
 Also: `/robots.txt`, `/sitemap.xml`, `/opengraph-image`, per-project `/opengraph-image` endpoints, favicon, error and 404 views.
 
-## Before final publication
+## Résumé and content updates
 
-Supply the real résumé PDF. Place it under `public/` and set `profile.resume` to its actual root-relative PDF path; the navigation then exposes Resume ↗. The test suite verifies that any configured PDF exists. Until then the link is omitted.
+When the real résumé PDF is ready, place it under `public/` and set `profile.resume` to its actual root-relative PDF path; the navigation then exposes Resume ↗. The test suite verifies that any configured PDF exists. Until then the link is omitted, and the site can be deployed without it.
 
-Supply the brand-new GitHub repository and final domain. No code or configuration here connects to the old portfolio repository. Product screenshots can be added later if desired, but no screenshots or performance metrics have been fabricated to fill gaps.
+No code or configuration here connects to the old portfolio repository. Product screenshots can be added later if desired, but no screenshots or performance metrics have been fabricated to fill gaps.
 
-## Vercel deployment — when authorized
+## Deploy on Vercel
 
-1. Publish this local repository only to the new GitHub repository supplied by the owner. Do not select or configure `BaconKage/Personal_Portfolio`.
-2. In Vercel, create a new project and import that new repository. Use repository root `.`, Framework Preset **Next.js**, Node.js **22.x**, install command **npm ci**, build command **npm run build**, and the default Next.js output directory. No custom routing file or static-export setting is needed. [Vercel build settings](https://vercel.com/docs/builds/configure-a-build).
-3. Set `NEXT_PUBLIC_SITE_URL` to the final HTTPS origin, without a trailing slash, in the Production environment. For Preview, use the same production origin for canonical links. The app emits noindex/nofollow on Preview and local builds. If an explicit origin is absent on Vercel, it uses `VERCEL_PROJECT_PRODUCTION_URL`.
-4. Complete résumé and content checks before clicking Deploy. Vercel's first deployment of a new project is a production deployment, including a dashboard repository import. Subsequent non-production branch deployments are previews. [Vercel environments](https://vercel.com/docs/deployments/environments).
-5. Verify all seven content routes, unknown-project 404, six social images, robots, sitemap, contact links, résumé, mobile navigation, and reduced motion on the generated deployment URL. Check that canonical URLs use the final origin.
-6. Add the final domain in the new project's domain settings, follow Vercel's displayed DNS records, and verify HTTPS. Rebuild if the origin environment variable changes. Keep local milestone history.
+1. Open [Vercel New Project](https://vercel.com/new), connect your GitHub account if needed, and import **BaconKage/Personal_Portfolio_Professional**. Select the **main** branch. Do not import the old `Personal_Portfolio` repository.
+2. Use the settings below, then click **Deploy**. Next.js is supported directly by Vercel; no custom routing file, static export, database, API keys, or paid integrations are needed. [Next.js on Vercel](https://vercel.com/docs/frameworks/full-stack/nextjs).
+
+| Setting | Value |
+| --- | --- |
+| Root directory | Repository root (`.`) |
+| Framework preset | Next.js |
+| Node.js | 22.x (pinned in `package.json`) |
+| Install command | `npm ci` |
+| Build command | `npm run build` |
+| Output directory | Leave the Next.js default; do not override |
+| Required environment variables | None for the initial Vercel deployment |
+
+The Node.js version is pinned to the tested major version so Vercel does not select a newer major from an open-ended range. [Vercel Node.js versions](https://vercel.com/docs/functions/runtimes/node-js/node-js-versions).
+
+3. For the initial deployment, the app uses Vercel's automatically provided `VERCEL_PROJECT_PRODUCTION_URL` for canonical URLs, sitemap, and social images. Keep **Automatically expose System Environment Variables** enabled (Vercel's default). Preview deployments and local builds emit noindex/nofollow.
+4. If you add a custom domain, set `NEXT_PUBLIC_SITE_URL` to its HTTPS origin without a trailing slash in Production and Preview, then redeploy. Example: `https://your-domain.com`. Add the domain in Vercel's project settings and follow its DNS instructions. Do not set this variable to localhost or a placeholder.
+5. On the deployed URL, check the homepage, work index, all five case studies, contact/social links, mobile navigation, and reduced motion. Confirm `/robots.txt`, `/sitemap.xml`, and `/opengraph-image` work, and that canonical URLs use your production origin. Add the résumé whenever the real PDF is available.
+
+Vercel's first import is a production deployment. Subsequent pushes to `main` normally redeploy production; other branches produce previews. [Vercel environments](https://vercel.com/docs/deployments/environments).
 
 ## Validation scope and limitations
 
-See `QA.md` for the performed visual and technical checks. Browser viewport emulation does not replace testing on a physical iPhone/Android device and Safari. No Lighthouse score, field Core Web Vitals, clinical accuracy, or product usage metrics are claimed. GPU context-failure recovery is implemented but was not induced on the user's graphics device. The site is ready for local review; final hosting, domain, and résumé verification remain publication steps.
+See `QA.md` for the performed visual and technical checks. Browser viewport emulation does not replace testing on a physical iPhone/Android device and Safari. No Lighthouse score, field Core Web Vitals, clinical accuracy, or product usage metrics are claimed. GPU context-failure recovery is implemented but was not induced on the user's graphics device. The repository is prepared for owner-managed Vercel deployment; the first hosted build and final domain still need verification on Vercel.
 
 
 
