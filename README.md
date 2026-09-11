@@ -1,6 +1,6 @@
 # Shubhang Srinivas Varda — immersive portfolio
 
-A standalone Next.js portfolio for Shubhang Srinivas Varda, maintained at [BaconKage/Personal_Portfolio_Professional](https://github.com/BaconKage/Personal_Portfolio_Professional). It was built in `C:\Lusion Portfolio` with milestone history preserved. The original `BaconKage/Personal_Portfolio` repository was used only as a read-only factual reference. Hosting is managed by the owner.
+A standalone Next.js portfolio for Shubhang Srinivas Varda, maintained at [BaconKage/Personal_Portfolio_Professional](https://github.com/BaconKage/Personal_Portfolio_Professional). 
 
 ## Run locally
 
