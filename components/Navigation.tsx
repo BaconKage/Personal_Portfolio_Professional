@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { profile } from "@/data/profile";
+import SocialLinks from "./SocialLinks";
 
 export default function Navigation() {
   const [open, setOpen] = useState(false);
@@ -96,6 +97,10 @@ export default function Navigation() {
         <a className="menu-email" href={`mailto:${profile.email}`}>
           {profile.email}
         </a>
+        <div className="menu-socials">
+          <p className="eyebrow">ELSEWHERE</p>
+          <SocialLinks />
+        </div>
       </dialog>
     </>
   );

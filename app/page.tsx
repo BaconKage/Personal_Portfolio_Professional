@@ -6,6 +6,7 @@ import ReadingText from "@/components/ReadingText";
 import SignalJourney from "@/components/SignalJourney";
 import CoreInteraction from "@/components/CoreInteraction";
 import CoreIgnition from "@/components/CoreIgnition";
+import SocialLinks from "@/components/SocialLinks";
 import Artwork from "@/components/Artwork";
 import { profile, research } from "@/data/profile";
 
@@ -105,7 +106,7 @@ export default function Home() {
           </a>
         </div>
         <div className="hero-foot eyebrow">
-          <span>ENGINEERING × INTELLIGENCE × INTERACTION</span>
+          <SocialLinks />
           <CoreIgnition />
         </div>
       </section>
@@ -296,14 +297,7 @@ export default function Home() {
         </h2>
         <div className="contact-bottom">
           <a href={`mailto:${profile.email}`}>{profile.email}</a>
-          <div>
-            <a href={profile.github} target="_blank" rel="noreferrer">
-              GitHub ↗
-            </a>
-            <a href={profile.linkedin} target="_blank" rel="noreferrer">
-              LinkedIn ↗
-            </a>
-          </div>
+          <SocialLinks />
         </div>
       </section>
       <footer className="footer">

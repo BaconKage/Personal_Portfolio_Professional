@@ -106,3 +106,9 @@ Extended the ignition to 3.2 seconds using one shared clock for the shader and p
 Checked the trace-to-type handoff at 1440 × 900 and the settled mobile composition at 390 × 844. Confirmed refresh re-enters the waiting/running sequence, a refresh from Contact returns to scroll position 0, and completion restores the interactive hero. No mobile horizontal overflow or browser warnings/errors were observed. Earlier first-visit/session behavior above describes the preceding milestone.
 
 Lint and production build/TypeScript pass. Verified the rebuilt port-3001 preview completes normally and a subsequent refresh starts a fresh ignition with the shared duration set to 3200ms.
+
+## Social profile placement
+
+Added a shared GitHub/LinkedIn link treatment to the hero footer, contact section, and mobile menu's Elsewhere row. Hero links arrive with the ignition's supporting copy. Text links use the existing color palette, an underline reveal, and subtle diagonal arrow movement on hover/focus. Each opens the owner's exact supplied URL in a new tab with noopener/noreferrer and a screen-reader hint.
+
+Reviewed the desktop hero at 1440 × 900 and mobile layout/menu at 390 × 844. Confirmed all six rendered link destinations match the supplied profiles, mobile link hit areas are 44px tall, and the page has no horizontal overflow. Lint and production build/TypeScript pass.
