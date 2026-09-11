@@ -623,7 +623,7 @@ i {
 .contact h2 a {
   color: #c1ceff;
 }
-.contact h2 span {
+.contact h2 .contact-arrow {
   font-weight: 300;
   margin-left: 35px;
 }
@@ -952,7 +952,7 @@ i {
     line-height: 1.05;
     margin: 38px 0 50px;
   }
-  .contact h2 span {
+  .contact h2 .contact-arrow {
     margin-left: 12px;
   }
   .contact-bottom {

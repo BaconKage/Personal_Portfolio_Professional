@@ -4,6 +4,7 @@ import KineticText from "@/components/KineticText";
 import NeuralPrompt from "@/components/NeuralPrompt";
 import ReadingText from "@/components/ReadingText";
 import SignalJourney from "@/components/SignalJourney";
+import CoreInteraction from "@/components/CoreInteraction";
 import Artwork from "@/components/Artwork";
 import { profile, research } from "@/data/profile";
 
@@ -83,6 +84,7 @@ export default function Home() {
           <Artwork scene="hero" />
         </div>
         <NeuralPrompt />
+        <CoreInteraction />
         <div className="hero-bottom">
           <p>
             Full-Stack & AI Engineer.
@@ -288,7 +290,7 @@ export default function Home() {
           something
           <br />
           <a href={`mailto:${profile.email}`}>
-            worth using.<span>↗</span>
+            <KineticText text="worth using." /><span className="contact-arrow">↗</span>
           </a>
         </h2>
         <div className="contact-bottom">

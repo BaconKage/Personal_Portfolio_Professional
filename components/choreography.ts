@@ -17,9 +17,9 @@ export function mountChoreography() {
           stagger: 0.14,
           duration: 1.35,
         })
-        .from(".hero-art", { scale: 0.82, y: 80, duration: 1.8 }, 0.05)
+        .from(".hero-art", { opacity: 0, duration: 1.5 }, 0.05)
         .from(
-          ".hero-topline,.hero-bottom,.hero-foot",
+          ".hero-topline",
           { autoAlpha: 0, y: 22, stagger: 0.12, duration: 0.9 },
           0.45,
         );
@@ -27,9 +27,9 @@ export function mountChoreography() {
         scrollTrigger: {
           trigger: hero,
           start: "top top",
-          end: desktop ? "+=650" : "bottom top",
+          end: "bottom top",
           scrub: 1,
-          pin: desktop,
+          pin: false,
           pinSpacing: true,
           invalidateOnRefresh: true,
         },
@@ -48,14 +48,13 @@ export function mountChoreography() {
         .to(
           ".hero-art",
           {
-            scale: desktop ? 1.5 : 1.12,
-            yPercent: desktop ? -12 : 0,
+            scale: 1.06,
+            yPercent: 0,
             borderRadius: 0,
             ease: "none",
           },
           0,
-        )
-        .to(".hero-bottom,.hero-foot", { opacity: 0, y: -35 }, 0);
+        );
     }
     document.querySelectorAll<HTMLElement>(".project").forEach((el, i) => {
       const title = el.querySelector(".project-heading");
@@ -219,4 +218,3 @@ export function mountChoreography() {
     ctx.revert();
   };
 }
-
