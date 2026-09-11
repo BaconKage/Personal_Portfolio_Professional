@@ -513,14 +513,15 @@ html[data-motion="reduced"] .letter-copy { display: none; }
 .hero:is([data-ignition="waiting"],[data-ignition="running"]) > .neural-prompt { visibility: hidden; }
 .hero[data-ignition="waiting"] :is(.hero-topline,.hero-line-inner,.hero-bottom,.hero-foot > span) { visibility: hidden; }
 .hero[data-ignition="waiting"] .hero-art { background: #060b18; }
-.hero[data-ignition="running"] .hero-art { animation: ignition-atmosphere 1.45s both; }
-.hero[data-ignition="running"] .hero-topline { animation: ignition-type .55s .52s both; }
-.hero[data-ignition="running"] .hero-line-inner { animation: ignition-line .6s .7s both; }
-.hero[data-ignition="running"] .hero-line:nth-child(2) .hero-line-inner { animation-delay: .8s; }
-.hero[data-ignition="running"] :is(.hero-bottom,.hero-foot > span) { animation: ignition-type .4s 1s both; }
-@keyframes ignition-type { from { opacity: 0; translate: 0 18px; visibility: hidden; } to { opacity: 1; translate: 0 0; visibility: visible; } }
-@keyframes ignition-line { from { translate: 0 108%; visibility: hidden; } to { translate: 0 0; visibility: visible; } }
-@keyframes ignition-atmosphere { from { background-color: #060b18; } to { background-color: transparent; } }
+.hero[data-ignition="running"] .hero-art { animation: ignition-atmosphere var(--ignition-duration) ease-in-out both; }
+.hero[data-ignition="running"] .hero-topline { animation: ignition-type calc(var(--ignition-duration) * .36) cubic-bezier(.22,1,.36,1) calc(var(--ignition-duration) * .3) both; }
+.hero[data-ignition="running"] .hero-line-inner { animation: ignition-line calc(var(--ignition-duration) * .42) cubic-bezier(.22,1,.36,1) calc(var(--ignition-duration) * .42) both; }
+.hero[data-ignition="running"] .hero-line:nth-child(2) .hero-line-inner { animation-delay: calc(var(--ignition-duration) * .48); }
+.hero[data-ignition="running"] :is(.hero-bottom,.hero-foot > span) { animation: ignition-type calc(var(--ignition-duration) * .29) cubic-bezier(.22,1,.36,1) calc(var(--ignition-duration) * .68) both; }
+.hero[data-ignition="running"] > .neural-prompt { animation: ignition-type calc(var(--ignition-duration) * .24) ease-out calc(var(--ignition-duration) * .75) both; pointer-events: none; }
+@keyframes ignition-type { from { opacity: 0; translate: 0 14px; visibility: hidden; } to { opacity: 1; translate: 0 0; visibility: visible; } }
+@keyframes ignition-line { from { opacity: 0; translate: 0 102%; visibility: hidden; } to { opacity: 1; translate: 0 0; visibility: visible; } }
+@keyframes ignition-atmosphere { from { opacity: .08; } to { opacity: 1; } }
 @media (max-width:767px) {
   .hero .hero-foot { align-items: center; }
   .hero .hero-foot > span { max-width: 190px; font-size: 11px; }

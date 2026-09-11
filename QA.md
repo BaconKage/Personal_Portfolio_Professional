@@ -98,3 +98,11 @@ Added a first-visit opening driven by the hero's first successful rendered frame
 Inspected consecutive trace frames and the settled hero at 1440 × 900 and 390 × 844. Verified pointer Skip, Escape, focus restoration to the named H1, automatic first entry in a new tab, and a warm refresh reaching the completed state in under the 1.45-second animation duration. Reduced motion removed the canvas and hid both intro controls. Mobile charge-button spacing was increased to keep it clear of supporting copy. No horizontal overflow appeared at the two target sizes. The 2.5-second graphics timeout and route/event cleanup were reviewed in code; an actual GPU failure was not induced.
 
 Lint, production compilation/TypeScript, and the complete production route/image/404 smoke suite pass. The production hero completed normally and reported no browser warnings or errors. The updated local preview runs on port 3001.
+
+## Slower ignition and refresh playback
+
+Extended the ignition to 3.2 seconds using one shared clock for the shader and proportional CSS timing. Framing and particle arrival use a smoother easing curve, the bright leading edge fades out gradually, and pointer response blends into the final scene. Identity, headline, supporting copy and the charge control now enter with longer overlapping reveals. Replaced the session-storage gate with a document-local guard: a full refresh plays the intro again, while client-side return navigation stays direct. Refreshing after scrolling returns to the hero, with scroll-restoration settings restored when the intro finishes or unmounts.
+
+Checked the trace-to-type handoff at 1440 × 900 and the settled mobile composition at 390 × 844. Confirmed refresh re-enters the waiting/running sequence, a refresh from Contact returns to scroll position 0, and completion restores the interactive hero. No mobile horizontal overflow or browser warnings/errors were observed. Earlier first-visit/session behavior above describes the preceding milestone.
+
+Lint and production build/TypeScript pass. Verified the rebuilt port-3001 preview completes normally and a subsequent refresh starts a fresh ignition with the shared duration set to 3200ms.

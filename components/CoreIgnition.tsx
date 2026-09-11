@@ -1,9 +1,8 @@
 "use client";
 
 import { useLayoutEffect, useRef } from "react";
+import { CORE_IGNITION_MS } from "@/lib/motion";
 
-const SESSION_KEY = "portfolio-core-ignition-v1";
-const DURATION = 1450;
 let seenInDocument = false;
 
 /** The first rendered GPU frame starts the intro; failure always releases it. */
@@ -20,6 +19,11 @@ export default function CoreIgnition() {
     let timer: ReturnType<typeof setTimeout> | undefined;
     let startScroll = window.scrollY;
     let disposed = false;
+    const navigation = performance.getEntriesByType("navigation")[0] as
+      PerformanceNavigationTiming | undefined;
+    const reloading = navigation?.type === "reload";
+    const previousRestoration = history.scrollRestoration;
+    hero.style.setProperty("--ignition-duration", `${CORE_IGNITION_MS}ms`);
 
     const allowed = () => {
       let preference = "system";
@@ -34,15 +38,14 @@ export default function CoreIgnition() {
       );
     };
     const remember = () => {
+      // Returning through client-side navigation skips entry; a refresh resets it.
       seenInDocument = true;
-      try {
-        sessionStorage.setItem(SESSION_KEY, "seen");
-      } catch {}
     };
     const finish = () => {
       clearTimeout(timer);
       hero.dataset.ignition = "complete";
       delete hero.dataset.ignitionStart;
+      if (reloading) history.scrollRestoration = previousRestoration;
       remember();
       if (
         document.activeElement === container.querySelector(".ignition-skip")
@@ -65,7 +68,7 @@ export default function CoreIgnition() {
       remember();
       hero.dataset.ignitionStart = String(performance.now());
       hero.dataset.ignition = "running";
-      timer = setTimeout(finish, DURATION);
+      timer = setTimeout(finish, CORE_IGNITION_MS);
     };
     const begin = (manual = false) => {
       if (!allowed()) {
@@ -133,18 +136,17 @@ export default function CoreIgnition() {
     media.addEventListener("change", preference);
     actions.current = { skip: finish, replay: () => begin(true) };
 
-    let seen = seenInDocument;
-    try {
-      seen ||= sessionStorage.getItem(SESSION_KEY) === "seen";
-    } catch {}
     if (
-      seen ||
+      seenInDocument ||
       !allowed() ||
-      window.scrollY > 100 ||
-      (location.hash && location.hash !== "#main")
+      (!reloading &&
+        (window.scrollY > 100 || (location.hash && location.hash !== "#main")))
     ) {
       hero.dataset.ignition = "complete";
-    } else begin();
+    } else {
+      if (reloading) history.scrollRestoration = "manual";
+      begin(reloading);
+    }
 
     return () => {
       disposed = true;
@@ -158,6 +160,8 @@ export default function CoreIgnition() {
       media.removeEventListener("change", preference);
       delete hero.dataset.ignition;
       delete hero.dataset.ignitionStart;
+      hero.style.removeProperty("--ignition-duration");
+      if (reloading) history.scrollRestoration = previousRestoration;
       actions.current = { skip: () => {}, replay: () => {} };
     };
   }, []);

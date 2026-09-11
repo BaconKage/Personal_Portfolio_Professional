@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import type { SceneProps } from "./types";
+import { CORE_IGNITION_MS } from "@/lib/motion";
 
 /** A sculptural bundle of neural pathways, with a travelling charge and elastic focus. */
 export default function HeroWorld({ pointer, quality }: SceneProps) {
@@ -60,7 +61,7 @@ export default function HeroWorld({ pointer, quality }: SceneProps) {
         `#include <emissivemap_fragment>
         float thread=pow(.5+.5*sin(neuralUv.y*100.53),18.);
         float pulse=pow(.5+.5*cos(neuralUv.x*18.85-uTime*1.3),16.);
-        float leadingEdge=(1.-smoothstep(0.,.025,abs(neuralUv.x-reveal)))*(1.-step(.99,uIgnition));
+        float leadingEdge=(1.-smoothstep(0.,.025,abs(neuralUv.x-reveal)))*(1.-smoothstep(.72,1.,uIgnition));
         totalEmissiveRadiance+=vec3(.035,.17,1.)*thread*(.22+pulse*(2.8+uCharge*4.)+(1.-metalArrival)*2.);
         totalEmissiveRadiance+=vec3(.35,.7,1.)*leadingEdge*3.;`,
       );
@@ -124,13 +125,13 @@ export default function HeroWorld({ pointer, quality }: SceneProps) {
           ? THREE.MathUtils.clamp(
               (performance.now() -
                 Number(element.current?.dataset.ignitionStart)) /
-                1450,
+                CORE_IGNITION_MS,
               0,
               1,
             )
           : 1;
-    const settle = THREE.MathUtils.smoothstep(ignition, 0.3, 1);
-    const arrival = THREE.MathUtils.smoothstep(ignition, 0.48, 1);
+    const settle = THREE.MathUtils.smootherstep(ignition, 0.18, 1);
+    const arrival = THREE.MathUtils.smootherstep(ignition, 0.4, 1);
     time.current += dt;
     charge.current = THREE.MathUtils.damp(charge.current, 0, 1.3, dt);
     uniforms.uTime.value = time.current;
@@ -156,13 +157,13 @@ export default function HeroWorld({ pointer, quality }: SceneProps) {
     );
     root.current.rotation.x = THREE.MathUtils.damp(
       root.current.rotation.x,
-      0.25 + pointer.y * 0.18 + rotation.current.x,
+      0.25 + pointer.y * 0.18 * settle + rotation.current.x,
       4,
       dt,
     );
     root.current.rotation.y = THREE.MathUtils.damp(
       root.current.rotation.y,
-      time.current * 0.12 + pointer.x * 0.22 + rotation.current.y,
+      time.current * 0.12 + pointer.x * 0.22 * settle + rotation.current.y,
       4,
       dt,
     );
