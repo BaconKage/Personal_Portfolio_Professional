@@ -244,7 +244,7 @@ function Renderer({
       gl.setScissorTest(true);
       try {
         gl.render(s.scene, s.camera);
-        s.element.dataset.ready = "true";
+        if (s.element.dataset.ready !== "true") s.element.dataset.ready = "true";
       } catch {
         document.documentElement.dataset.graphicsFallback = "render-error";
         delete s.element.dataset.ready;

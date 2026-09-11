@@ -8,21 +8,8 @@ export function mountChoreography() {
   const ctx = gsap.context(() => {
     const desktop = matchMedia("(min-width: 900px)").matches;
     const hero = document.querySelector<HTMLElement>(".hero");
-    const intro = gsap.timeline({ defaults: { ease: "expo.out" } });
     if (hero) {
-      intro
-        .from(".hero-line-inner", {
-          yPercent: 115,
-          rotation: 3,
-          stagger: 0.14,
-          duration: 1.35,
-        })
-        .from(".hero-art", { opacity: 0, duration: 1.5 }, 0.05)
-        .from(
-          ".hero-topline",
-          { autoAlpha: 0, y: 22, stagger: 0.12, duration: 0.9 },
-          0.45,
-        );
+      // CoreIgnition owns first-visit entry; scrolling owns only the exit.
       const exit = gsap.timeline({
         scrollTrigger: {
           trigger: hero,

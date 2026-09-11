@@ -5,6 +5,7 @@ import NeuralPrompt from "@/components/NeuralPrompt";
 import ReadingText from "@/components/ReadingText";
 import SignalJourney from "@/components/SignalJourney";
 import CoreInteraction from "@/components/CoreInteraction";
+import CoreIgnition from "@/components/CoreIgnition";
 import Artwork from "@/components/Artwork";
 import { profile, research } from "@/data/profile";
 
@@ -70,7 +71,7 @@ export default function Home() {
             <i /> BENGALURU, INDIA
           </span>
         </div>
-        <h1>
+        <h1 tabIndex={-1} aria-label="Software with an AI core.">
           <span className="hero-line">
             <span className="hero-line-inner">Software with</span>
           </span>
@@ -105,7 +106,7 @@ export default function Home() {
         </div>
         <div className="hero-foot eyebrow">
           <span>ENGINEERING × INTELLIGENCE × INTERACTION</span>
-          <span>SCROLL TO EXPLORE ↓</span>
+          <CoreIgnition />
         </div>
       </section>
       <section

@@ -11,11 +11,17 @@ export default function HeroWorld({ pointer, quality }: SceneProps) {
   const wave =
     useRef<THREE.Mesh<THREE.TorusGeometry, THREE.MeshBasicMaterial>>(null);
   const cloud = useRef<THREE.Points>(null);
+  const orbit =
+    useRef<THREE.Mesh<THREE.TorusGeometry, THREE.MeshBasicMaterial>>(null);
   const time = useRef(0),
     charge = useRef(0);
   const element = useRef<HTMLElement | null>(null);
   const uniforms = useMemo(
-    () => ({ uTime: { value: 0 }, uCharge: { value: 0 } }),
+    () => ({
+      uTime: { value: 0 },
+      uCharge: { value: 0 },
+      uIgnition: { value: 1 },
+    }),
     [],
   );
   const material = useMemo(() => {
@@ -27,6 +33,7 @@ export default function HeroWorld({ pointer, quality }: SceneProps) {
     m.onBeforeCompile = (shader) => {
       shader.uniforms.uTime = uniforms.uTime;
       shader.uniforms.uCharge = uniforms.uCharge;
+      shader.uniforms.uIgnition = uniforms.uIgnition;
       shader.vertexShader =
         "uniform float uTime; uniform float uCharge; varying vec2 neuralUv;\n" +
         shader.vertexShader;
@@ -38,14 +45,24 @@ export default function HeroWorld({ pointer, quality }: SceneProps) {
         transformed+=normal*breath;`,
       );
       shader.fragmentShader =
-        "uniform float uTime; uniform float uCharge; varying vec2 neuralUv;\n" +
+        "uniform float uTime; uniform float uCharge; uniform float uIgnition; varying vec2 neuralUv;\n" +
         shader.fragmentShader;
+      shader.fragmentShader = shader.fragmentShader.replace(
+        "#include <color_fragment>",
+        `#include <color_fragment>
+        float reveal=smoothstep(0.,.72,uIgnition);
+        if(uIgnition<.999 && neuralUv.x>reveal+.004) discard;
+        float metalArrival=smoothstep(.22,.88,uIgnition);
+        diffuseColor.rgb*=mix(.018,1.,metalArrival);`,
+      );
       shader.fragmentShader = shader.fragmentShader.replace(
         "#include <emissivemap_fragment>",
         `#include <emissivemap_fragment>
         float thread=pow(.5+.5*sin(neuralUv.y*100.53),18.);
         float pulse=pow(.5+.5*cos(neuralUv.x*18.85-uTime*1.3),16.);
-        totalEmissiveRadiance+=vec3(.035,.17,1.)*thread*(.22+pulse*(2.8+uCharge*4.));`,
+        float leadingEdge=(1.-smoothstep(0.,.025,abs(neuralUv.x-reveal)))*(1.-step(.99,uIgnition));
+        totalEmissiveRadiance+=vec3(.035,.17,1.)*thread*(.22+pulse*(2.8+uCharge*4.)+(1.-metalArrival)*2.);
+        totalEmissiveRadiance+=vec3(.35,.7,1.)*leadingEdge*3.;`,
       );
     };
     return m;
@@ -99,22 +116,42 @@ export default function HeroWorld({ pointer, quality }: SceneProps) {
   }, [material, particles]);
   useFrame((_, delta) => {
     const dt = Math.min(delta, 0.04);
+    const phase = element.current?.dataset.ignition;
+    const ignition =
+      phase === "waiting"
+        ? 0
+        : phase === "running"
+          ? THREE.MathUtils.clamp(
+              (performance.now() -
+                Number(element.current?.dataset.ignitionStart)) /
+                1450,
+              0,
+              1,
+            )
+          : 1;
+    const settle = THREE.MathUtils.smoothstep(ignition, 0.3, 1);
+    const arrival = THREE.MathUtils.smoothstep(ignition, 0.48, 1);
     time.current += dt;
     charge.current = THREE.MathUtils.damp(charge.current, 0, 1.3, dt);
     uniforms.uTime.value = time.current;
-    uniforms.uCharge.value = charge.current;
+    uniforms.uCharge.value =
+      charge.current + Math.sin(ignition * Math.PI) * 0.7;
+    uniforms.uIgnition.value = ignition;
     if (wave.current) {
       wave.current.scale.setScalar(1 + (1 - charge.current) * 0.65);
       wave.current.material.opacity = charge.current * 0.65;
     }
     cloud.current?.scale.setScalar(1 + charge.current * 0.16);
+    if (cloud.current)
+      (cloud.current.material as THREE.PointsMaterial).opacity = 0.58 * arrival;
+    if (orbit.current) orbit.current.material.opacity = 0.45 * arrival;
     if (!root.current) return;
     const r = element.current?.getBoundingClientRect();
     const mobile = !!r && r.width < 768;
     const halfWidth = 2.99 * (r ? r.width / r.height : 1.8);
     root.current.position.set(
-      mobile ? 0 : halfWidth * 0.39,
-      mobile ? -0.3 : 0.1,
+      mobile ? 0 : halfWidth * 0.39 * settle,
+      (mobile ? -0.3 : 0.1) * settle,
       0,
     );
     root.current.rotation.x = THREE.MathUtils.damp(
@@ -131,7 +168,9 @@ export default function HeroWorld({ pointer, quality }: SceneProps) {
     );
     root.current.rotation.z = -0.36 + Math.sin(time.current * 0.23) * 0.08;
     root.current.scale.setScalar(
-      (mobile ? 0.5 : 1.05) * (1 + charge.current * 0.08),
+      (mobile ? 0.5 : 1.05) *
+        (1 + charge.current * 0.08) *
+        (1 + (1 - settle) * 0.24),
     );
   });
   return (
@@ -150,7 +189,7 @@ export default function HeroWorld({ pointer, quality }: SceneProps) {
           depthWrite={false}
         />
       </points>
-      <mesh rotation={[Math.PI / 2.7, 0.2, 0]}>
+      <mesh ref={orbit} rotation={[Math.PI / 2.7, 0.2, 0]}>
         <torusGeometry args={[2.75, 0.009, 5, 160]} />
         <meshBasicMaterial color="#638cff" transparent opacity={0.45} />
       </mesh>
