@@ -2,6 +2,7 @@
 
 import { useLayoutEffect, useRef } from "react";
 import { CORE_IGNITION_MS } from "@/lib/motion";
+import { resetCore } from "@/lib/core-sequence";
 
 let seenInDocument = false;
 
@@ -71,6 +72,7 @@ export default function CoreIgnition() {
       timer = setTimeout(finish, CORE_IGNITION_MS);
     };
     const begin = (manual = false) => {
+      if (manual) resetCore();
       if (!allowed()) {
         finish();
         return;

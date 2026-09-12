@@ -118,3 +118,11 @@ Reviewed the desktop hero at 1440 × 900 and mobile layout/menu at 390 × 844. C
 Prepared the new `BaconKage/Personal_Portfolio_Professional` repository for owner-managed deployment. Pinned Node.js to 22.x in the package manifest and lockfile, ignored local Vercel metadata, and documented the exact import settings and optional custom-domain environment variable. All existing commit authors and committers use the owner's Git identity, with no assistant co-author trailers. No common credential patterns were found in tracked text files.
 
 On Node.js 22.22.3, lint, all three content tests, the production build/TypeScript check, and the full production route/image/404 smoke suite pass. Vercel's hosted build has not been run; deployment remains with the owner.
+
+## Reversible core explosion
+
+Energise now builds a blue pathway glow over 2.2 seconds, releases the sculpture into a full-hero star field over 2.8 seconds, and leaves a persistent Reform the core action. Reconstruction takes 3.2 seconds. A shared state machine coordinates the UI and GPU without per-frame React updates. Stars sample the sculpture's actual geometry, use curved outward/returning paths, and retain depth, soft glow, subtle twinkle, and damped pointer parallax. Rendering still uses the shared canvas and existing quality tiers.
+
+Visually inspected the charge, star field, and restored sculpture at 1440 × 900 and 390 × 844, plus the tablet composition at 768 × 1024. Fixed the lower hero content area intercepting part of the action button by raising its stacking order and increasing its clearance. Verified pointer and keyboard activation, reconstruction, persistent stars while the offscreen scene unmounts, and clean cancellation during Replay Intro and reduced motion. Reduced motion removes the canvas and resets the core state; mobile has no horizontal overflow.
+
+Lint, all six tests (content and sequence lifecycle/continuity/cancellation), production build/TypeScript, and the production route/image/404 smoke suite pass. Rechecked the full production charge/reform cycle and replay cancellation before push; the browser reported no warnings or errors. Physical-device/Safari checks remain outside this browser-based verification.

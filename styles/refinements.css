@@ -540,3 +540,23 @@ html[data-motion="reduced"] .ignition-replay { display: none !important; }
 .menu-socials { max-width: 360px; margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--line); }
 .menu-socials .eyebrow { color: var(--muted); margin-bottom: 8px; }
 @media (max-width:767px) { .hero-foot .social-links { gap: 22px; } .hero-foot .social-links a { font-size: 14px; } }
+
+/* A persistent action anchors the charge, release and reconstruction. */
+.hero > .neural-prompt { z-index: 4; bottom: 180px; }
+.hero > .neural-prompt button {
+  position: relative;
+  overflow: hidden;
+  min-width: 205px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  transition: background .6s ease, border-color .6s ease, box-shadow .8s ease;
+}
+.core-button-light { width: 5px; height: 5px; flex-shrink: 0; border-radius: 50%; background: #a7caff; transition: box-shadow .8s ease, background .8s ease; }
+.hero > .neural-prompt:is([data-phase="charging"],[data-phase="dispersing"],[data-phase="reforming"]) button { background: #142d5cda; border-color: #8ab3ff; cursor: progress; box-shadow: 0 0 30px #387cff22; }
+.neural-prompt:is([data-phase="charging"],[data-phase="dispersing"],[data-phase="reforming"]) .core-button-light { background: #edf6ff; box-shadow: 0 0 12px 3px #5894ff; }
+.hero > .neural-prompt[data-phase="stars"] button { background: #12254bba; border-color: #96b6ec; }
+.hero[data-core-phase="stars"] .hero-core-surface { cursor: pointer; }
+.hero:is([data-core-phase="charging"],[data-core-phase="dispersing"],[data-core-phase="reforming"]) .hero-core-surface { cursor: default; }
+.hero:is([data-core-phase="charging"],[data-core-phase="dispersing"],[data-core-phase="reforming"]) .core-hint { opacity: 0; }

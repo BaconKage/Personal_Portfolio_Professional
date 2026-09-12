@@ -1,7 +1,18 @@
 "use client";
-import { useRef } from "react";
+import { useRef, useSyncExternalStore } from "react";
+import {
+  getCoreState,
+  getServerCoreState,
+  subscribeCore,
+} from "@/lib/core-sequence";
 
 export default function CoreInteraction() {
+  const { phase } = useSyncExternalStore(
+    subscribeCore,
+    getCoreState,
+    getServerCoreState,
+  );
+  const starry = phase === "stars";
   const drag = useRef<{
     id: number;
     x: number;
@@ -15,7 +26,7 @@ export default function CoreInteraction() {
       className="hero-core-surface"
       role="group"
       tabIndex={0}
-      aria-label="Interactive AI core"
+      aria-label={starry ? "Interactive star field" : "Interactive AI core"}
       aria-describedby="core-help"
       onPointerDown={(e) => {
         if (e.button !== 0) return;
@@ -76,12 +87,14 @@ export default function CoreInteraction() {
       }}
     >
       <span className="core-hint" aria-hidden="true">
-        DRAG TO TURN <b>↔</b> CLICK TO CHARGE
+        {starry
+          ? "CLICK TO REFORM THE CORE ↻"
+          : "DRAG TO TURN ↔ CLICK TO ENERGISE"}
       </span>
       <span id="core-help" className="sr-only">
-        Drag or swipe horizontally to turn the sculpture. With keyboard focus,
-        use arrow keys to rotate and Enter to send a charge. Vertical swipes
-        scroll the page.
+        {starry
+          ? "Press Enter or Space to bring the core back from the star field."
+          : "Drag or swipe horizontally to turn the sculpture. Use arrow keys to rotate. Press Enter or Space to energise it and release the stars. Vertical swipes scroll the page."}
       </span>
     </div>
   );

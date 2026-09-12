@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "node --test tests/content.test.mjs"
+    "test": "node --test tests/content.test.mjs tests/core-sequence.test.mjs"
   },
   "engines": {
     "node": "22.x"
