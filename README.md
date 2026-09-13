@@ -4,17 +4,18 @@ A standalone Next.js portfolio for Shubhang Srinivas Varda, maintained at [Bacon
 
 ## Run locally
 
-Use Node.js 22 and npm. From PowerShell:
+Use Node.js 22 and npm:
 
-```powershell
-Set-Location -LiteralPath 'C:\Lusion Portfolio'
+```bash
+git clone https://github.com/BaconKage/Personal_Portfolio_Professional.git
+cd Personal_Portfolio_Professional
 npm ci
 npm run dev
 ```
 
 Open http://localhost:3000. To verify and serve a production build:
 
-```powershell
+```bash
 npm run lint
 npm run typecheck
 npm test
