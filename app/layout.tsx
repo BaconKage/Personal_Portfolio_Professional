@@ -6,6 +6,7 @@ import { siteUrl, indexable } from "@/lib/site";
 import { profile, research } from "@/data/profile";
 import "./globals.css";
 import "@/styles/refinements.css";
+import "@/styles/playground.css";
 const sans = Geist({
   subsets: ["latin"],
   variable: "--font-sans",

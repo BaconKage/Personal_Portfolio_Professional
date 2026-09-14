@@ -39,7 +39,9 @@ export default function RouteTransition({ reduced }: { reduced: boolean }) {
       pending.current = true;
       anchor.closest('dialog')?.close();
       const token=++generation.current;
-      const card = anchor.closest<HTMLElement>('.project,.index-project');
+      const playground = anchor.hasAttribute('data-playground-project') ? anchor.closest('.playground')?.querySelector<HTMLElement>('.playground-stage') : null;
+      const fallback = playground ? Array.from(playground.querySelectorAll<HTMLElement>('[data-project-title]')).find(el => el.dataset.projectTitle === anchor.dataset.playgroundProject) : null;
+      const card = (playground?.dataset.ready === 'true' ? playground : fallback) || anchor.closest<HTMLElement>('.project,.index-project,[data-project-zoom]');
       const navigate = () => router.push(url.pathname+url.search);
       router.prefetch(url.pathname);
       const release = () => {
@@ -83,7 +85,7 @@ export default function RouteTransition({ reduced }: { reduced: boolean }) {
         if(disposed || token!==generation.current) return;
         const title=document.createElement('span');
         title.className='project-zoom-title';
-        title.textContent=card.querySelector('h2,h3')?.textContent?.replace('case study','').replace('↗','').trim() || 'Inside the work.';
+        title.textContent=anchor.dataset.playgroundProject || card.dataset.projectTitle || card.querySelector('h2,h3')?.textContent?.replace('case study','').replace('↗','').trim() || 'Inside the work.';
         // Kinetic headings duplicate visible letters; their accessible text is canonical.
         const accessible=card.querySelector('h3 .sr-only');
         if(accessible) title.textContent=accessible.textContent;

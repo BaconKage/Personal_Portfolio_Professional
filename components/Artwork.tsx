@@ -1,19 +1,18 @@
 import Image from "next/image";
-export type SceneId =
-  | "portal"
-  | "hero"
+export type ProjectSceneId =
   | "mygym"
   | "vanicert"
   | "firstdrop-ai"
   | "bhashabuddy"
   | "posture-engine";
+export type SceneId = "hero" | "portal" | "playground" | ProjectSceneId;
 /** Original artwork remains visible without JavaScript or WebGL. */
 export default function Artwork({
   scene,
   className = "",
   eager = false,
 }: {
-  scene: SceneId;
+  scene: "hero" | ProjectSceneId;
   className?: string;
   eager?: boolean;
 }) {

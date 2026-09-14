@@ -3,7 +3,9 @@ import Link from "next/link";
 import KineticText from "@/components/KineticText";
 import NeuralPrompt from "@/components/NeuralPrompt";
 import ReadingText from "@/components/ReadingText";
+import ProjectPlayground from "@/components/ProjectPlayground";
 import SignalJourney from "@/components/SignalJourney";
+import { projects } from "@/data/projects";
 import CoreInteraction from "@/components/CoreInteraction";
 import CoreIgnition from "@/components/CoreIgnition";
 import SocialLinks from "@/components/SocialLinks";
@@ -281,6 +283,7 @@ export default function Home() {
           </p>
         </div>
       </section>
+      <ProjectPlayground projects={projects.map(({ slug, title, category, summary, number }) => ({ slug, title, category, summary, number }))} />
       <SignalJourney />
       <section className="contact section-pad" id="contact">
         <span className="eyebrow">

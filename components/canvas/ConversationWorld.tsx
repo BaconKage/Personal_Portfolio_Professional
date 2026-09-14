@@ -9,6 +9,8 @@ export default function ConversationWorld({
   step,
 }: SceneProps) {
   const ref = useRef<THREE.Group>(null);
+  const dots = useRef<THREE.InstancedMesh>(null);
+  const dotMatrix = useMemo(() => new THREE.Matrix4(), []);
   const geometries = useMemo(
     () =>
       [0, 1].map((side) => {
@@ -43,6 +45,17 @@ export default function ConversationWorld({
   useFrame((_, dt) => {
     motionTime.current += Math.min(dt, 0.04);
     const time = motionTime.current;
+    if (dots.current) {
+      for (let i = 0; i < 24; i++) {
+        dotMatrix.makeTranslation(
+          -0.8 + i * 0.07,
+          Math.sin(i * 0.22 + progress.current) * 0.22,
+          0,
+        );
+        dots.current.setMatrixAt(i, dotMatrix);
+      }
+      dots.current.instanceMatrix.needsUpdate = true;
+    }
     ref.current?.children.slice(0, 2).forEach((c, i) => {
       c.position.x = THREE.MathUtils.damp(
         c.position.x,
@@ -76,19 +89,14 @@ export default function ConversationWorld({
           />
         </lineSegments>
       ))}
-      {Array.from({ length: 24 }, (_, i) => (
-        <mesh
-          key={i}
-          position={[
-            -0.8 + i * 0.07,
-            Math.sin(i * 0.22 + progress.current) * 0.22,
-            0,
-          ]}
-        >
-          <sphereGeometry args={[0.025, 8, 8]} />
-          <meshBasicMaterial color="#f3bfa1" />
-        </mesh>
-      ))}
+      <instancedMesh
+        ref={dots}
+        args={[undefined, undefined, 24]}
+        frustumCulled={false}
+      >
+        <sphereGeometry args={[0.025, 8, 8]} />
+        <meshBasicMaterial color="#f3bfa1" />
+      </instancedMesh>
     </group>
   );
 }

@@ -1,6 +1,6 @@
-import type { SceneId } from "@/components/Artwork";
+import type { ProjectSceneId } from "@/components/Artwork";
 export type Project = {
-  slug: Exclude<SceneId, "hero">;
+  slug: ProjectSceneId;
   title: string;
   descriptor: string;
   category: string;

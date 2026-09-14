@@ -43,26 +43,37 @@ export function createTransitionField() {
       ];
     return [Math.cos(t) * 2.5, Math.sin(t) * 1.15, Math.sin(t * 4) * 0.3];
   };
+  const forms = new Map<SceneId, Float32Array>();
+  const form = (id: SceneId) => {
+    if (!forms.has(id)) {
+      const values = new Float32Array(count * 3);
+      for (let i = 0; i < count; i++) values.set(shape(id, i), i * 3);
+      forms.set(id, values);
+    }
+    return forms.get(id)!;
+  };
   return {
     scene,
     camera,
     update(from: SceneId, to: SceneId, t: number, aspect: number) {
       const p = geometry.getAttribute("position") as THREE.BufferAttribute;
       const mix = THREE.MathUtils.smoothstep(t, 0, 1);
+      const a = form(from),
+        b = form(to);
       for (let i = 0; i < count; i++) {
-        const a = shape(from, i),
-          b = shape(to, i);
         p.setXYZ(
           i,
-          THREE.MathUtils.lerp(a[0], b[0], mix),
-          THREE.MathUtils.lerp(a[1], b[1], mix),
-          THREE.MathUtils.lerp(a[2], b[2], mix),
+          THREE.MathUtils.lerp(a[i * 3], b[i * 3], mix),
+          THREE.MathUtils.lerp(a[i * 3 + 1], b[i * 3 + 1], mix),
+          THREE.MathUtils.lerp(a[i * 3 + 2], b[i * 3 + 2], mix),
         );
       }
       p.needsUpdate = true;
       material.opacity = Math.sin(t * Math.PI) * 0.65;
-      camera.aspect = aspect;
-      camera.updateProjectionMatrix();
+      if (camera.aspect !== aspect) {
+        camera.aspect = aspect;
+        camera.updateProjectionMatrix();
+      }
     },
     dispose() {
       geometry.dispose();

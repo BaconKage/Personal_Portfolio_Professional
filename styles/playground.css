@@ -1,0 +1,463 @@
+.playground {
+  position: relative;
+  padding: 88px var(--gutter) 28px;
+  background: #070c17;
+  color: #edf1f8;
+  scroll-margin-top: 30px;
+}
+.playground-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 30px;
+  margin-bottom: 46px;
+}
+.playground .eyebrow {
+  font-size: 12px;
+  line-height: 1.7;
+  letter-spacing: 0.08em;
+  color: #a4b3d0;
+}
+.playground-header h2 {
+  margin: 25px 0 0;
+  font-size: clamp(64px, 7.5vw, 118px);
+  font-weight: 450;
+  line-height: 0.98;
+  letter-spacing: -0.065em;
+}
+.playground-header h2 em {
+  color: #98b4ff;
+  font-style: normal;
+}
+.playground-header > p {
+  position: relative;
+  z-index: 2;
+  margin: 0 0 4px;
+  color: #aebcd4;
+  font-size: 16px;
+  line-height: 1.65;
+}
+.playground-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(270px, 0.4fr);
+  gap: clamp(30px, 4vw, 70px);
+}
+.playground-stage {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  min-height: 540px;
+  aspect-ratio: 1.22;
+  border: 1px solid #354360;
+  border-radius: 24px;
+  background: radial-gradient(
+    ellipse at 44% 42%,
+    #192b50 0%,
+    #0e192e 42%,
+    #0a1120 77%
+  );
+  /* Scissored WebGL stays in this slot; projected semantic buttons sit above it. */
+  touch-action: pan-y pinch-zoom;
+}
+.playground-stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0.24;
+  background-image: radial-gradient(#849dc8 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: radial-gradient(ellipse, #000, transparent 75%);
+}
+.playground-coordinates {
+  position: absolute;
+  top: 23px;
+  left: 26px;
+  right: 26px;
+  display: flex;
+  justify-content: space-between;
+  font: 11px var(--font-mono);
+  letter-spacing: 0.09em;
+  color: #8b9cbb;
+  pointer-events: none;
+  z-index: 2;
+}
+.playground-objects {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  visibility: hidden;
+  pointer-events: none;
+}
+.playground-stage[data-ready="true"] .playground-objects {
+  visibility: visible;
+}
+.playground-object {
+  position: absolute;
+  left: 0;
+  top: 0;
+  will-change: transform;
+  transform: translate(-50%, -50%);
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  padding: 0;
+  color: #d6e1f7;
+  cursor: grab;
+  pointer-events: auto;
+  touch-action: pan-y pinch-zoom;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.playground-stage[data-dragging="true"] .playground-object {
+  cursor: grabbing;
+}
+.playground-object-label {
+  position: absolute;
+  top: calc(100% - 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  font-size: 13px;
+  padding: 7px 10px;
+  border-radius: 20px;
+  background: #0b1426d9;
+  pointer-events: none;
+  transition:
+    background 0.2s,
+    color 0.2s;
+}
+.playground-object-label small {
+  font: 10px var(--font-mono);
+  color: #8b9bb8;
+}
+.playground-object:is(:hover, :focus-visible, [aria-pressed="true"])
+  .playground-object-label {
+  background: #cad9ff;
+  color: #101d39;
+}
+.playground-object:is(:hover, :focus-visible, [aria-pressed="true"]) small {
+  color: #3f5380;
+}
+.playground-object:focus-visible {
+  outline: 2px dashed #cbdcff;
+  outline-offset: 5px;
+}
+.playground-stage-footer {
+  position: absolute;
+  bottom: 18px;
+  left: 25px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  z-index: 3;
+  pointer-events: none;
+}
+.playground-instruction {
+  font-size: 13px;
+  color: #a4b6d6;
+  visibility: hidden;
+}
+.playground-stage[data-ready="true"] .playground-instruction {
+  visibility: visible;
+}
+.playground-touch-hint {
+  display: none;
+}
+.playground-assemble {
+  display: inline-flex;
+  gap: 9px;
+  align-items: center;
+  min-height: 44px;
+  padding: 9px 17px;
+  border: 1px solid #657caa;
+  border-radius: 30px;
+  font-size: 14px;
+  color: #dfebff;
+  background: #10203b;
+  pointer-events: auto;
+  cursor: pointer;
+  visibility: hidden;
+}
+.playground-stage[data-ready="true"] .playground-assemble {
+  visibility: visible;
+}
+.playground-assemble > span {
+  font-size: 23px;
+  line-height: 1;
+}
+.playground-assemble:hover {
+  background: #264788;
+  border-color: #b2caff;
+}
+.playground-sidebar {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 28px;
+  padding-top: 8px;
+}
+.playground-detail {
+  min-height: 270px;
+}
+.playground-detail h3 {
+  margin: 20px 0;
+  font-size: clamp(27px, 2.6vw, 42px);
+  font-weight: 450;
+  letter-spacing: -0.045em;
+  line-height: 1.12;
+  overflow-wrap: anywhere;
+}
+.playground-detail > p {
+  margin: 0 0 22px;
+  font-size: 16px;
+  line-height: 1.65;
+  color: #aebdd5;
+  max-width: 36ch;
+}
+.playground-explore {
+  display: inline-flex;
+  min-height: 46px;
+  align-items: center;
+  gap: 32px;
+  color: #d4e2ff;
+  border-bottom: 1px solid #869ed1;
+  font-size: 16px;
+}
+.playground-explore:hover {
+  color: white;
+  border-color: white;
+}
+.playground-awaiting {
+  font-size: 13px;
+  color: #8f9fba;
+}
+.playground-picker {
+  border-top: 1px solid #35425a;
+}
+.playground-picker button {
+  width: 100%;
+  min-height: 54px;
+  display: flex;
+  gap: 13px;
+  align-items: center;
+  padding: 14px 2px;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid #35425a;
+  color: #b9c7df;
+  font-size: 15px;
+  text-align: left;
+  cursor: pointer;
+}
+.playground-picker button > span {
+  font: 11px var(--font-mono);
+  color: #91a3c2;
+}
+.playground-picker button > b {
+  font-size: 20px;
+  font-weight: 400;
+  margin-left: auto;
+}
+.playground-picker button:is(:hover, [aria-pressed="true"]) {
+  color: white;
+  background: #16223a;
+  padding-inline: 10px;
+}
+.playground-footnote {
+  position: relative;
+  z-index: 2;
+  margin-top: 26px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  color: #8c9dbb;
+  font-size: 13px;
+}
+.playground-footnote p {
+  margin: 0;
+}
+.playground-footnote a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  color: #c4d3ee;
+}
+.playground :is(a, button):focus-visible {
+  outline: 2px solid #bbd1ff;
+  outline-offset: 5px;
+}
+.playground-fallback {
+  position: absolute;
+  inset: 0;
+  padding: 60px 22px 24px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.playground-stage[data-ready="true"] .playground-fallback {
+  visibility: hidden;
+}
+.playground-poster {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  background: #172642;
+  border: 1px solid #354868;
+  border-radius: 12px;
+}
+.playground-poster .artwork {
+  position: relative;
+  width: 100%;
+  height: 0;
+  min-height: 0;
+  flex: 1;
+  object-fit: contain;
+}
+.playground-poster > span {
+  display: flex;
+  gap: 6px;
+  justify-content: space-between;
+  position: relative;
+  z-index: 2;
+  padding: 10px 12px;
+  color: #d4e0f8;
+  font-size: 13px;
+}
+.playground-poster b {
+  font-weight: 400;
+}
+.playground-poster:last-child {
+  grid-column: 1 / -1;
+}
+@media (pointer: coarse) {
+  .playground-desktop-hint {
+    display: none;
+  }
+  .playground-touch-hint {
+    display: inline;
+  }
+  .playground-object {
+    cursor: pointer;
+  }
+}
+@media (max-width: 1000px) {
+  .playground-layout {
+    grid-template-columns: minmax(0, 1fr) 270px;
+    gap: 26px;
+  }
+  .playground-stage {
+    min-height: 500px;
+  }
+  .playground-stage-footer {
+    left: 15px;
+    right: 15px;
+  }
+  .playground-instruction {
+    max-width: 145px;
+    line-height: 1.5;
+  }
+  .playground-object-label {
+    font-size: 12px;
+    gap: 5px;
+  }
+}
+@media (max-width: 767px) {
+  .playground {
+    padding: 64px 20px 25px;
+  }
+  .playground-header {
+    display: block;
+    margin-bottom: 30px;
+  }
+  .playground-header h2 {
+    font-size: clamp(58px, 13vw, 90px);
+    margin-top: 22px;
+  }
+  .playground-header > p {
+    margin-top: 24px;
+  }
+  .playground-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+  }
+  .playground-stage {
+    min-height: 440px;
+    aspect-ratio: 0.82;
+    border-radius: 18px;
+  }
+  .playground-coordinates {
+    left: 18px;
+    right: 18px;
+    top: 20px;
+    font-size: 10px;
+  }
+  .playground-stage-footer {
+    bottom: 15px;
+  }
+  .playground-instruction {
+    font-size: 12px;
+  }
+  .playground-object-label {
+    padding: 6px 8px;
+  }
+  .playground-sidebar {
+    padding-top: 0;
+  }
+  .playground-detail {
+    min-height: 230px;
+  }
+  .playground-detail h3 {
+    font-size: 34px;
+  }
+  .playground-detail > p {
+    max-width: 45ch;
+  }
+  .playground-footnote {
+    display: block;
+    margin-top: 30px;
+  }
+  .playground-footnote a {
+    margin-top: 8px;
+  }
+  .playground-fallback {
+    padding: 55px 14px 16px;
+    gap: 9px;
+  }
+  .playground-poster > span {
+    font-size: 12px;
+    padding: 9px;
+  }
+}
+html[data-motion="reduced"] .playground-objects,
+html[data-graphics-fallback] .playground-objects {
+  display: none;
+}
+html[data-motion="reduced"] .playground-fallback,
+html[data-graphics-fallback] .playground-fallback {
+  visibility: visible;
+}
+@media (prefers-reduced-motion: reduce) {
+  .playground-objects {
+    display: none;
+  }
+  .playground-fallback {
+    visibility: visible !important;
+  }
+  .playground-assemble,
+  .playground-instruction {
+    display: none;
+  }
+}

@@ -38,9 +38,11 @@ function pose(phase: number): number[][] {
     [0.45, -2, 0],
   ];
 }
+const poses = [pose(0), pose(1), pose(2)];
 export default function PostureWorld({ step, pointer }: SceneProps) {
   const group = useRef<THREE.Group>(null);
   const joints = useRef<(THREE.Mesh | null)[]>([]);
+  const targetPosition = useMemo(() => new THREE.Vector3(), []);
   const geo = useMemo(
     () =>
       new THREE.BufferGeometry().setAttribute(
@@ -51,10 +53,14 @@ export default function PostureWorld({ step, pointer }: SceneProps) {
   );
   useEffect(() => () => geo.dispose(), [geo]);
   useFrame((_, dt) => {
-    const target = pose(step.current);
+    const target = poses[step.current] || poses[0];
+    const blend = 1 - Math.exp(-5 * dt);
     joints.current.forEach((m, i) => {
       if (m)
-        m.position.lerp(new THREE.Vector3(...target[i]), 1 - Math.exp(-5 * dt));
+        m.position.lerp(
+          targetPosition.set(target[i][0], target[i][1], target[i][2]),
+          blend,
+        );
     });
     const p = geo.getAttribute("position") as THREE.BufferAttribute;
     bones.forEach(([a, b], i) => {
@@ -66,7 +72,6 @@ export default function PostureWorld({ step, pointer }: SceneProps) {
       }
     });
     p.needsUpdate = true;
-    geo.computeBoundingSphere();
     if (group.current)
       group.current.rotation.y = THREE.MathUtils.damp(
         group.current.rotation.y,
@@ -77,7 +82,7 @@ export default function PostureWorld({ step, pointer }: SceneProps) {
   });
   return (
     <group ref={group} position={[0, 0.15, 0]}>
-      <lineSegments geometry={geo}>
+      <lineSegments geometry={geo} frustumCulled={false}>
         <lineBasicMaterial color="#c5fa9a" />
       </lineSegments>
       {pose(0).map((p, i) => (

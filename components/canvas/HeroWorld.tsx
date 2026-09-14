@@ -8,7 +8,7 @@ import { getCoreState, sampleCore } from "@/lib/core-sequence";
 import { createCoreStars } from "./CoreStars";
 
 /** A sculptural bundle of neural pathways, with a travelling charge and elastic focus. */
-export default function HeroWorld({ pointer, quality }: SceneProps) {
+export default function HeroWorld({ pointer, quality, layout }: SceneProps) {
   const rotation = useRef({ x: 0, y: 0 });
   const root = useRef<THREE.Group>(null);
   const sculpture = useRef<THREE.Mesh>(null);
@@ -183,7 +183,7 @@ export default function HeroWorld({ pointer, quality }: SceneProps) {
     if (orbit.current)
       orbit.current.material.opacity = 0.45 * arrival * frame.surface;
     if (!root.current) return;
-    const r = element.current?.getBoundingClientRect();
+    const r = layout.section;
     const mobile = !!r && r.width < 768;
     const halfWidth = 2.99 * (r ? r.width / r.height : 1.8);
     root.current.position.set(
