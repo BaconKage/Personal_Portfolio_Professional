@@ -12,11 +12,29 @@
   box-sizing: border-box;
 }
 html {
-  scroll-behavior: smooth;
   scroll-padding-top: 95px;
+  /* Locking scroll (menu, transitions) must not shift the layout. */
+  scrollbar-gutter: stable;
+}
+/* Lenis owns smoothing; native smooth-scroll would fight its per-frame writes. */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+html.lenis.lenis-stopped,
+html.scroll-locked {
+  overflow: clip;
+}
+.lenis [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
 }
 body {
   margin: 0;
+  /* Full-bleed bands use vw, which includes the scrollbar on desktop. */
+  overflow-x: clip;
   background: var(--paper);
   color: var(--ink);
   font-family: var(--font-sans), Arial, sans-serif;
@@ -136,49 +154,6 @@ button {
 }
 .contact-pill span {
   font-size: 22px;
-}
-.menu-trigger {
-  display: none;
-}
-.mobile-menu {
-  border: 0;
-  background: var(--paper);
-  color: var(--ink);
-  max-width: none;
-  max-height: none;
-  width: 100%;
-  height: 100dvh;
-  margin: 0;
-  padding: 24px;
-}
-.mobile-menu::backdrop {
-  background: #111a;
-}
-.menu-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.menu-top button {
-  border: 0;
-  background: none;
-  padding: 15px;
-}
-.mobile-menu nav {
-  display: flex;
-  flex-direction: column;
-  gap: 28px;
-  margin-top: 90px;
-  font-size: 50px;
-  letter-spacing: -3px;
-}
-.mobile-menu nav sup {
-  font-size: 16px;
-}
-.menu-email {
-  display: block;
-  margin-top: 70px;
-  font-size: 16px;
 }
 .hero {
   min-height: calc(100svh - 104px);
@@ -456,6 +431,26 @@ i {
 .project-bhashabuddy .art-caption {
   color: #152b2680;
 }
+/* The home card is deep green so its landing sheet has depth to bloom from
+   (see ProjectSheet). The case study keeps the light palette above. */
+.project.project-bhashabuddy {
+  background: radial-gradient(
+    ellipse at 40% 60%,
+    #1f5446 0%,
+    #123a31 48%,
+    #0b2620 80%
+  );
+  color: #e9f3ee;
+}
+.project.project-bhashabuddy .project-top {
+  color: #9cc3b3;
+}
+.project.project-bhashabuddy .project-cta {
+  border-color: #e9f3ee60;
+}
+.project.project-bhashabuddy .art-caption {
+  color: #e9f3ee80;
+}
 .all-work {
   padding: 48px var(--gutter) 90px;
   display: flex;
@@ -723,19 +718,6 @@ i {
   .desktop-nav {
     display: none;
   }
-  .menu-trigger {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    background: none;
-    border: 0;
-    margin-left: auto;
-    padding: 12px 0 12px 12px;
-    font-size: 14px;
-  }
-  .menu-trigger span {
-    font-size: 24px;
-  }
   .hero {
     padding-top: 25px;
     min-height: calc(100svh - 80px);
@@ -974,9 +956,6 @@ i {
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
   *,
   *::before,
   *::after {

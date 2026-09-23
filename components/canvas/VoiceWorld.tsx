@@ -7,6 +7,7 @@ export default function VoiceWorld({
   progress,
   quality,
   step,
+  active,
 }: SceneProps) {
   const g = useRef<THREE.Group>(null);
   const geo = useMemo(() => {
@@ -38,6 +39,7 @@ export default function VoiceWorld({
   );
   const motionTime = useRef(0);
   useFrame((_, dt) => {
+    if (!active.current) return;
     motionTime.current += Math.min(dt, 0.04);
     const time = motionTime.current;
     if (g.current) {

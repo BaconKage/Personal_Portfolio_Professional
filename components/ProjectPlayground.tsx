@@ -194,7 +194,7 @@ export default function ProjectPlayground({
         </p>
       </header>
       <div className="playground-layout">
-        <div className="playground-stage" data-scene="playground" ref={stage}>
+        <div className="playground-stage" data-scene="playground" data-cursor="drag" ref={stage}>
           <div className="playground-coordinates" aria-hidden="true">
             <span>FIELD / 05</span>
             <span>SHUBHANG VARDA</span>

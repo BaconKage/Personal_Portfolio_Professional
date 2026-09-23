@@ -218,11 +218,13 @@ export default function PlaygroundWorld({
   element,
   camera,
   layout,
+  active,
 }: SceneProps) {
   const physics = useMemo(() => createPlaygroundPhysics(), []);
   const groups = useRef<(THREE.Group | null)[]>([]);
   const rings = useRef<(THREE.MeshBasicMaterial | null)[]>([]);
   const hitTargets = useRef<HTMLButtonElement[]>([]);
+  const placed = useRef<string[]>([]);
   const selected = useRef(-1),
     hovered = useRef(-1);
   const time = useRef(0);
@@ -271,10 +273,12 @@ export default function PlaygroundWorld({
       element.removeEventListener("playground-input", input);
       element.dispatchEvent(new Event("playground-reset-gesture"));
       hitTargets.current.forEach((button) => button.removeAttribute("style"));
+      placed.current = [];
     };
   }, [element, physics]);
 
   useFrame((_, delta) => {
+    if (!active.current) return;
     if (document.hidden || camera.position.z === 0) return;
     const rect = layout.rect;
     if (
@@ -343,7 +347,12 @@ export default function PlaygroundWorld({
       );
       const x = ((projected.x + 1) * 0.5 * rect.width).toFixed(2);
       const y = ((1 - projected.y) * 0.5 * rect.height).toFixed(2);
-      button.style.transform = `translate3d(${x}px,${y}px,0) translate(-50%,-50%)`;
+      // Settled bodies cost no style writes; only moving targets touch the DOM.
+      const place = `translate3d(${x}px,${y}px,0) translate(-50%,-50%)`;
+      if (placed.current[i] !== place) {
+        placed.current[i] = place;
+        button.style.transform = place;
+      }
       const rounded = `${size.toFixed(1)}px`;
       if (button.style.width !== rounded) {
         button.style.width = rounded;

@@ -1,11 +1,11 @@
 /** Shared by the semantic controls and the GPU scene; no per-frame React state. */
-export type CorePhase =
-  "idle" | "charging" | "dispersing" | "stars" | "reforming";
+export type CorePhase = "idle" | "charging" | "online" | "cooling";
 export type CoreState = { phase: CorePhase; startedAt: number };
 export const CORE_TIMING = {
-  charging: 2200,
-  dispersing: 2800,
-  reforming: 3200,
+  charging: 2600,
+  /** How long the ignition flash takes to settle once online. */
+  flash: 900,
+  cooling: 1800,
 };
 const resting: CoreState = { phase: "idle", startedAt: 0 };
 let state = resting;
@@ -25,15 +25,14 @@ function enter(phase: CorePhase) {
   state = { phase, startedAt: performance.now() };
   listeners.forEach((listener) => listener());
   if (phase === "charging")
-    timer = setTimeout(() => enter("dispersing"), CORE_TIMING.charging);
-  else if (phase === "dispersing")
-    timer = setTimeout(() => enter("stars"), CORE_TIMING.dispersing);
-  else if (phase === "reforming")
-    timer = setTimeout(() => enter("idle"), CORE_TIMING.reforming);
+    timer = setTimeout(() => enter("online"), CORE_TIMING.charging);
+  else if (phase === "cooling")
+    timer = setTimeout(() => enter("idle"), CORE_TIMING.cooling);
 }
+/** Energise from rest, or power down once online. Mid-transition clicks wait. */
 export function activateCore() {
   if (state.phase === "idle") enter("charging");
-  else if (state.phase === "stars") enter("reforming");
+  else if (state.phase === "online") enter("cooling");
 }
 export function resetCore() {
   clearTimeout(timer);
@@ -45,31 +44,34 @@ const smooth = (a: number, b: number, value: number) => {
   return x * x * x * (x * (x * 6 - 15) + 10);
 };
 
-/** Continuous endpoints keep timer/renderer handoffs invisible, even after a hidden tab. */
+/**
+ * energy: overall power (light output). coils: fraction of the coil ring lit,
+ * in order. spin: HUD ring speed. flash: the ignition burst, 1 at the instant
+ * the core comes online. Endpoints are continuous, so timer handoffs never snap.
+ */
 export function sampleCore({ phase, startedAt }: CoreState, now: number) {
   const elapsed = Math.max(0, now - startedAt);
   if (phase === "charging") {
-    const energy = smooth(0, 1, elapsed / CORE_TIMING.charging);
-    return { energy, spread: 0, surface: 1, stars: energy * 0.32 };
-  }
-  if (phase === "dispersing") {
-    const p = Math.min(1, elapsed / CORE_TIMING.dispersing);
+    const p = Math.min(1, elapsed / CORE_TIMING.charging);
     return {
-      energy: 1 - smooth(0, 0.65, p),
-      spread: 1 - Math.pow(1 - p, 3),
-      surface: 1 - smooth(0, 0.26, p),
-      stars: 0.32 + 0.68 * smooth(0, 0.12, p),
+      energy: smooth(0.05, 1, p) * 0.72 + smooth(0.9, 1, p) * 0.28,
+      coils: smooth(0, 0.78, p),
+      spin: smooth(0, 1, p),
+      flash: smooth(0.88, 1, p),
     };
   }
-  if (phase === "stars") return { energy: 0, spread: 1, surface: 0, stars: 1 };
-  if (phase === "reforming") {
-    const p = Math.min(1, elapsed / CORE_TIMING.reforming);
+  if (phase === "online") {
+    const p = Math.min(1, elapsed / CORE_TIMING.flash);
+    return { energy: 1, coils: 1, spin: 1, flash: 1 - smooth(0, 1, p) };
+  }
+  if (phase === "cooling") {
+    const p = Math.min(1, elapsed / CORE_TIMING.cooling);
     return {
-      energy: Math.sin(p * Math.PI) * 0.65,
-      spread: 1 - smooth(0, 0.86, p),
-      surface: smooth(0.62, 1, p),
-      stars: 1 - smooth(0.72, 1, p),
+      energy: 1 - smooth(0, 1, p),
+      coils: 1 - smooth(0.1, 0.9, p),
+      spin: 1 - smooth(0, 1, p),
+      flash: 0,
     };
   }
-  return { energy: 0, spread: 0, surface: 1, stars: 0 };
+  return { energy: 0, coils: 0, spin: 0, flash: 0 };
 }

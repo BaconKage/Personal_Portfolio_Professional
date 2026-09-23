@@ -12,7 +12,7 @@ export default function CoreInteraction() {
     getCoreState,
     getServerCoreState,
   );
-  const starry = phase === "stars";
+  const online = phase === "online";
   const drag = useRef<{
     id: number;
     x: number;
@@ -24,9 +24,10 @@ export default function CoreInteraction() {
   return (
     <div
       className="hero-core-surface"
+      data-cursor="drag"
       role="group"
       tabIndex={0}
-      aria-label={starry ? "Interactive star field" : "Interactive AI core"}
+      aria-label="Interactive reactor core"
       aria-describedby="core-help"
       onPointerDown={(e) => {
         if (e.button !== 0) return;
@@ -87,14 +88,14 @@ export default function CoreInteraction() {
       }}
     >
       <span className="core-hint" aria-hidden="true">
-        {starry
-          ? "CLICK TO REFORM THE CORE ↻"
+        {online
+          ? "DRAG TO TURN ↔ CLICK TO POWER DOWN"
           : "DRAG TO TURN ↔ CLICK TO ENERGISE"}
       </span>
       <span id="core-help" className="sr-only">
-        {starry
-          ? "Press Enter or Space to bring the core back from the star field."
-          : "Drag or swipe horizontally to turn the sculpture. Use arrow keys to rotate. Press Enter or Space to energise it and release the stars. Vertical swipes scroll the page."}
+        {online
+          ? "Drag or use arrow keys to turn the reactor. Press Enter or Space to power it down."
+          : "Drag or swipe horizontally to turn the reactor. Use arrow keys to rotate. Press Enter or Space to energise it. Vertical swipes scroll the page."}
       </span>
     </div>
   );

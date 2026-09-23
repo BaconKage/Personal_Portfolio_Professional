@@ -21,21 +21,26 @@ export function getRenderProfile(device: DeviceBudget) {
   };
 }
 
-/** Resolution adapts; effects and geometry stay mounted throughout the change. */
+/**
+ * Resolution only ever steps down, in a few large steps. Every change
+ * reallocates the drawing buffer (a visible hitch), so oscillating between
+ * levels costs more smoothness than it recovers in sharpness.
+ */
 export function createRenderBudget(maxDpr: number, minDpr: number) {
   let dpr = maxDpr,
     elapsed = 0,
     frames = 0,
     late = 0;
-  let cooldown = 1200,
-    healthy = 0;
+  let cooldown = 1200;
+  const step = () =>
+    Math.max(0.125, Math.ceil(((maxDpr - minDpr) / 3) * 8) / 8);
   return {
     get dpr() {
       return dpr;
     },
     reset() {
-      elapsed = frames = late = healthy = 0;
-      cooldown = 1200;
+      elapsed = frames = late = 0;
+      cooldown = Math.max(cooldown, 1200);
     },
     resize(maximum: number, minimum: number) {
       maxDpr = maximum;
@@ -61,18 +66,11 @@ export function createRenderBudget(maxDpr: number, minDpr: number) {
       const average = elapsed / frames,
         missed = late / frames;
       const overloaded = average > 22 && missed > 0.2;
-      healthy = average < 18 && missed < 0.08 ? healthy + elapsed : 0;
       elapsed = frames = late = 0;
       if (overloaded && dpr > minDpr) {
-        dpr = Math.max(minDpr, Math.round((dpr - 0.125) * 1000) / 1000);
-        cooldown = 1200;
-        healthy = 0;
-        return dpr;
-      }
-      if (healthy > 7000 && dpr < maxDpr) {
-        dpr = Math.min(maxDpr, Math.round((dpr + 0.125) * 1000) / 1000);
-        cooldown = 2000;
-        healthy = 0;
+        dpr = Math.max(minDpr, Math.round((dpr - step()) * 1000) / 1000);
+        // A new resolution needs time to show its real cost before judging again.
+        cooldown = 3000;
         return dpr;
       }
       return null;

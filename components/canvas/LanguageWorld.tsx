@@ -25,8 +25,15 @@ function Glyph({
     </mesh>
   );
 }
-export default function LanguageWorld({ pointer, step }: SceneProps) {
+export default function LanguageWorld({
+  pointer,
+  step,
+  active,
+  element,
+}: SceneProps) {
   const ref = useRef<THREE.Group>(null);
+  const dark = element.classList.contains("project");
+  const blue = dark ? "#8aa6ff" : "#244cff";
   const ring = useMemo(() => {
     const points: number[] = [];
     for (let i = 0; i < 160; i++) {
@@ -42,6 +49,7 @@ export default function LanguageWorld({ pointer, step }: SceneProps) {
   useEffect(() => () => ring.dispose(), [ring]);
   const motionTime = useRef(0);
   useFrame((_, dt) => {
+    if (!active.current) return;
     motionTime.current += Math.min(dt, 0.04);
     const time = motionTime.current;
     ref.current?.children
@@ -76,13 +84,17 @@ export default function LanguageWorld({ pointer, step }: SceneProps) {
           geometry={ring}
           rotation={[0.2 * i, 0.2, i * 0.75]}
         >
-          <lineBasicMaterial color="#244cff" transparent opacity={0.22} />
+          <lineBasicMaterial
+            color={dark ? "#9db8ff" : "#244cff"}
+            transparent
+            opacity={dark ? 0.32 : 0.22}
+          />
         </lineSegments>
       ))}
-      <Glyph glyph="0" position={[-2, 0.2, 0]} color="#244cff" />
+      <Glyph glyph="0" position={[-2, 0.2, 0]} color={blue} />
       <Glyph glyph="1" position={[0, 1, 0]} color="#cf6949" />
-      <Glyph glyph="2" position={[1.9, -0.2, 0]} color="#244cff" />
-      <Glyph glyph="3" position={[-0.2, -1.25, 0]} color="#244cff" />
+      <Glyph glyph="2" position={[1.9, -0.2, 0]} color={blue} />
+      <Glyph glyph="3" position={[-0.2, -1.25, 0]} color={blue} />
       <mesh position={[2, 1.25, 0]}>
         <sphereGeometry args={[0.15, 20, 20]} />
         <meshStandardMaterial color="#df8457" roughness={0.35} />

@@ -23,15 +23,18 @@ test("High-DPI phones and 4K displays stay within their pixel budgets", () => {
     assert.ok(p.geometryQuality > 0, "Effects must stay enabled on compact devices");
   }
 });
-test("Sustained missed frames lower resolution and recovery is deliberately slower", () => {
+test("Sustained missed frames lower resolution in few steps and never oscillate", () => {
   const budget = createRenderBudget(1.75, .75);
-  run(budget, 33.3, 240);
+  const changes = [];
+  for (let i = 0; i < 240; i++) {
+    const next = budget.sample(33.3);
+    if (next !== null) changes.push(next);
+  }
   const lower = budget.dpr;
   assert.ok(lower < 1.75 && lower >= .75);
-  run(budget, 16.67, 180);
-  assert.equal(budget.dpr, lower, "A short good spell must not bounce quality back up");
-  run(budget, 16.67, 1500);
-  assert.ok(budget.dpr > lower && budget.dpr <= 1.75);
+  assert.ok(changes.length <= 2, "Each buffer reallocation is a hitch; keep them rare");
+  run(budget, 16.67, 3000);
+  assert.equal(budget.dpr, lower, "Recovered frame time must not bounce quality back up");
 });
 test("Fast displays, initial shader work, and hidden-tab gaps do not downgrade quality", () => {
   const budget = createRenderBudget(1.5, .75);

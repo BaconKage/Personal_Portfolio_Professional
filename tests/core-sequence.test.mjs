@@ -40,7 +40,7 @@ function sequence() {
   };
 }
 
-test("Charge cannot restart mid-flight, stars persist, and reform permits another full cycle", () => {
+test("Charge cannot restart mid-flight, online persists, and power-down permits another cycle", () => {
   const core = sequence();
   const phases = [];
   const unsubscribe = core.subscribeCore(() =>
@@ -50,22 +50,18 @@ test("Charge cannot restart mid-flight, stars persist, and reform permits anothe
   core.advance(800);
   core.activateCore();
   assert.equal(core.getCoreState().startedAt, 0);
-  core.advance(4200);
-  assert.equal(core.getCoreState().phase, "stars");
+  core.advance(2000);
+  assert.equal(core.getCoreState().phase, "online");
   core.advance(120000);
-  assert.equal(core.getCoreState().phase, "stars");
+  assert.equal(core.getCoreState().phase, "online");
   core.activateCore();
-  core.advance(3200);
+  core.advance(600);
+  core.activateCore();
+  assert.equal(core.getCoreState().phase, "cooling");
+  core.advance(1200);
   assert.equal(core.getCoreState().phase, "idle");
   core.activateCore();
-  assert.deepEqual(phases, [
-    "charging",
-    "dispersing",
-    "stars",
-    "reforming",
-    "idle",
-    "charging",
-  ]);
+  assert.deepEqual(phases, ["charging", "online", "cooling", "idle", "charging"]);
   unsubscribe();
   core.resetCore();
 });
@@ -73,13 +69,13 @@ test("Charge cannot restart mid-flight, stars persist, and reform permits anothe
 test("Phase endpoints match, so the core never snaps at a timer handoff", () => {
   const core = sequence();
   const transitions = [
-    ["idle", 0, "charging"],
-    ["charging", 2200, "dispersing"],
-    ["dispersing", 2800, "stars"],
-    ["stars", 0, "reforming"],
-    ["reforming", 3200, "idle"],
+    ["idle", 0, "idle", "charging"],
+    ["charging", 2600, "online", "online"],
+    // Online persists: its settled state must meet the start of cooling.
+    ["online", 60000, "online", "cooling"],
+    ["cooling", 1800, "cooling", "idle"],
   ];
-  for (const [from, duration, to] of transitions) {
+  for (const [from, duration, , to] of transitions) {
     const before = core.sampleCore({ phase: from, startedAt: 0 }, duration);
     const after = core.sampleCore({ phase: to, startedAt: 0 }, 0);
     for (const key of Object.keys(before))

@@ -27,6 +27,9 @@
 .project-bhashabuddy .project-heading h3 a:hover {
   color: #244cff;
 }
+.project.project-bhashabuddy .project-heading h3 a:hover {
+  color: #9fe3c6;
+}
 .motion-setting {
   padding: 0 var(--gutter) 18px;
   display: flex;
@@ -55,4 +58,9 @@ html[data-motion="reduced"] * {
 }
 .global-canvas:empty {
   display: none;
+}
+/* A WebGL sheet paints the card (background included) once it is ready. */
+.project[data-sheet="true"] {
+  /* Must beat per-card backgrounds such as .project.project-bhashabuddy. */
+  background: transparent !important;
 }

@@ -7,6 +7,7 @@ export default function ConversationWorld({
   progress,
   quality,
   step,
+  active,
 }: SceneProps) {
   const ref = useRef<THREE.Group>(null);
   const dots = useRef<THREE.InstancedMesh>(null);
@@ -43,6 +44,7 @@ export default function ConversationWorld({
   );
   const motionTime = useRef(0);
   useFrame((_, dt) => {
+    if (!active.current) return;
     motionTime.current += Math.min(dt, 0.04);
     const time = motionTime.current;
     if (dots.current) {

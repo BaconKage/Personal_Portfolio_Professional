@@ -10,19 +10,16 @@ import {
 } from "@/lib/core-sequence";
 const labels: Record<CorePhase, string> = {
   idle: "Energise the core ↗",
-  charging: "Charging the core…",
-  dispersing: "Releasing the stars…",
-  stars: "Reform the core ↻",
-  reforming: "Reforming the core…",
+  charging: "Powering up…",
+  online: "Power down ↓",
+  cooling: "Cooling down…",
 };
 const descriptions: Record<CorePhase, string> = {
-  idle: "The core is ready to energise.",
-  charging:
-    "Blue pathways are gathering energy before the core expands into stars.",
-  dispersing: "The core is becoming a star field.",
-  stars:
-    "The star field is ready. Choose Reform the core to bring the sculpture back.",
-  reforming: "The stars are returning to reconstruct the core.",
+  idle: "The reactor core is on standby, ready to energise.",
+  charging: "The coils are lighting in sequence as the core powers up.",
+  online:
+    "The core is online and lighting the hero. Choose Power down to return it to standby.",
+  cooling: "The core is powering down to standby.",
 };
 export default function NeuralPrompt() {
   const { phase } = useSyncExternalStore(
@@ -31,7 +28,7 @@ export default function NeuralPrompt() {
     getServerCoreState,
   );
   const container = useRef<HTMLDivElement>(null);
-  const busy = !["idle", "stars"].includes(phase);
+  const busy = !["idle", "online"].includes(phase);
   useEffect(() => {
     const hero = container.current?.closest<HTMLElement>(".hero");
     if (!hero) return;

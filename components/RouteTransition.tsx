@@ -2,6 +2,27 @@
 import { useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { gsap } from "gsap";
+import { lockScroll, unlockScroll } from "@/lib/scroll";
+import { projectZoom } from "@/lib/zoom";
+
+/** Grab the canvas's next frame (bounded), or null if it never comes. */
+function captureFrame(isCurrent: () => boolean) {
+  return new Promise<HTMLCanvasElement | null>((resolve) => {
+    let complete = false;
+    const timeout = setTimeout(() => { complete = true; resolve(null); }, 160);
+    window.dispatchEvent(new CustomEvent('project-frame', { detail: (source: HTMLCanvasElement) => {
+      if (complete || !isCurrent()) return;
+      complete = true; clearTimeout(timeout);
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = source.width; canvas.height = source.height;
+        canvas.getContext('2d')?.drawImage(source, 0, 0);
+        canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;';
+        resolve(canvas);
+      } catch { resolve(null); }
+    } }));
+  });
+}
 
 export default function RouteTransition({ reduced }: { reduced: boolean }) {
   const router = useRouter();
@@ -37,6 +58,8 @@ export default function RouteTransition({ reduced }: { reduced: boolean }) {
       event.preventDefault(); event.stopPropagation();
       if(pending.current) return;
       pending.current = true;
+      // Hold the page still under the curtain; SmoothScroll releases on arrival.
+      lockScroll('route');
       anchor.closest('dialog')?.close();
       const token=++generation.current;
       const playground = anchor.hasAttribute('data-playground-project') ? anchor.closest('.playground')?.querySelector<HTMLElement>('.playground-stage') : null;
@@ -44,54 +67,62 @@ export default function RouteTransition({ reduced }: { reduced: boolean }) {
       const card = (playground?.dataset.ready === 'true' ? playground : fallback) || anchor.closest<HTMLElement>('.project,.index-project,[data-project-zoom]');
       const navigate = () => router.push(url.pathname+url.search);
       router.prefetch(url.pathname);
+      let undoZoom = () => {};
       const release = () => {
         pending.current=false; generation.current++;
+        undoZoom();
+        unlockScroll('route');
         gsap.to(stage,{autoAlpha:0,duration:.3,onComplete:()=>stage?.replaceChildren()});
         gsap.to(curtain,{yPercent:-100,duration:.3});
       };
-      timer.current=setTimeout(release,5000);
+      timer.current=setTimeout(release,6500);
       if(card && url.pathname.startsWith('/work/') && stage) {
         mode.current='project';
-        const rect=card.getBoundingClientRect();
-        const computed=getComputedStyle(card);
-        const poster=card.querySelector<HTMLImageElement>('img.artwork');
-        const image = poster?.cloneNode(true) as HTMLImageElement | undefined;
-        stage.replaceChildren();
-        stage.style.background=computed.background;
-        if(image) { image.removeAttribute('class'); image.removeAttribute('loading'); image.alt=''; image.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:contain;'; stage.append(image); }
-        // A bounded, one-frame capture preserves the actual live project world.
-        if(card.dataset.ready==='true') {
-          await new Promise<void>(resolve=>{
-            let complete=false;
-            const timeout=setTimeout(()=>{complete=true;resolve();},140);
-            window.dispatchEvent(new CustomEvent('project-frame',{detail:(source:HTMLCanvasElement)=>{
-              if(complete || disposed || token!==generation.current) return;
-              complete=true;clearTimeout(timeout);
-              try {
-                const canvas=document.createElement('canvas');
-                const ratio=Math.min(source.width/innerWidth,1.5);
-                canvas.width=Math.ceil(rect.width*ratio);canvas.height=Math.ceil(rect.height*ratio);
-                const context=canvas.getContext('2d');
-                if(context) {
-                  context.drawImage(source,0,0,source.width,source.height,-rect.left*ratio,-rect.top*ratio,innerWidth*ratio,innerHeight*ratio);
-                  canvas.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;';
-                  image?.remove();stage.append(canvas);
-                }
-              } catch { /* The local poster remains available if GPU copying fails. */ }
-              resolve();
-            }}));
-          });
+        const isCurrent = () => !disposed && token===generation.current;
+        // Like lusion.co: the page itself zooms around the chosen card until
+        // it overfills the screen, neighbours sweeping out of frame, while the
+        // card's own world pushes in. Then the frame freezes and the route
+        // changes underneath it.
+        const layer = card.closest<HTMLElement>('.selected,.work-list,section') || card.parentElement;
+        const rect = card.getBoundingClientRect();
+        const background = card.dataset.sheetBg || getComputedStyle(card).background;
+        const copy = Array.from(card.children).filter(child => !child.matches('.project-art,.index-art,.project-hit-area,.artwork') && !child.querySelector('img.artwork'));
+        const fill = Math.max(innerWidth/rect.width, innerHeight/rect.height) * 1.2;
+        const cx = rect.left + rect.width/2, cy = rect.top + rect.height/2;
+        undoZoom = () => {
+          projectZoom.element = null; projectZoom.amount = 0;
+          if(layer) gsap.set(layer, {clearProps:'transform,transformOrigin,willChange'});
+          gsap.set(copy, {clearProps:'opacity,visibility'});
+          window.dispatchEvent(new Event('scene-measure'));
+        };
+        gsap.to(copy, {autoAlpha:0, duration:.35, ease:'power2.in'});
+        if(layer) {
+          const origin = layer.getBoundingClientRect();
+          gsap.set(layer, {transformOrigin:`${cx-origin.left}px ${cy-origin.top}px`, willChange:'transform'});
+          projectZoom.element = card;
+          const zoomTween = {u:0};
+          await new Promise<void>(resolve => gsap.to(zoomTween, {u:1, duration:1.15, ease:'power2.inOut', onComplete:resolve, onUpdate:() => {
+            if(!isCurrent()) return;
+            const u = zoomTween.u;
+            gsap.set(layer, {x:(innerWidth/2-cx)*u, y:(innerHeight/2-cy)*u, scale:1+(fill-1)*u});
+            projectZoom.amount = u;
+            window.dispatchEvent(new Event('scene-measure'));
+          }}));
         }
-        if(disposed || token!==generation.current) return;
-        const title=document.createElement('span');
-        title.className='project-zoom-title';
-        title.textContent=anchor.dataset.playgroundProject || card.dataset.projectTitle || card.querySelector('h2,h3')?.textContent?.replace('case study','').replace('↗','').trim() || 'Inside the work.';
-        // Kinetic headings duplicate visible letters; their accessible text is canonical.
-        const accessible=card.querySelector('h3 .sr-only');
-        if(accessible) title.textContent=accessible.textContent;
-        stage.append(title);
-        gsap.set(stage,{left:rect.left,top:rect.top,width:rect.width,height:rect.height,borderRadius:computed.borderRadius,scale:1,autoAlpha:1});
-        gsap.to(stage,{left:0,top:0,width:innerWidth,height:innerHeight,borderRadius:0,duration:.72,ease:'power3.inOut',onComplete:navigate});
+        if(!isCurrent()) return;
+        // Freeze what is on screen so the route can change beneath it.
+        stage.replaceChildren();
+        stage.style.background = background;
+        const frame = card.dataset.ready==='true' ? await captureFrame(isCurrent) : null;
+        if(!isCurrent()) return;
+        if(frame) stage.append(frame);
+        else {
+          const poster = card.querySelector<HTMLImageElement>('img.artwork')?.cloneNode(true) as HTMLImageElement | undefined;
+          if(poster) { poster.removeAttribute('class'); poster.removeAttribute('loading'); poster.alt=''; poster.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;'; stage.append(poster); }
+        }
+        gsap.set(stage, {left:0, top:0, width:innerWidth, height:innerHeight, borderRadius:0, scale:1, autoAlpha:1});
+        projectZoom.element = null; projectZoom.amount = 0;
+        navigate();
       } else {
         mode.current='curtain';
         const label=curtain?.querySelector('span');

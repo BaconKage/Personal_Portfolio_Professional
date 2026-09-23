@@ -7,6 +7,7 @@ import { profile, research } from "@/data/profile";
 import "./globals.css";
 import "@/styles/refinements.css";
 import "@/styles/playground.css";
+import "@/styles/motion.css";
 const sans = Geist({
   subsets: ["latin"],
   variable: "--font-sans",
@@ -57,7 +58,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" data-scroll-behavior="smooth">
+    <html lang="en">
       <body className={`${sans.variable} ${mono.variable}`}>
         <script
           type="application/ld+json"

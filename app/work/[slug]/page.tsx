@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import Artwork from "@/components/Artwork";
 import Footer from "@/components/Footer";
+import NextPage from "@/components/NextPage";
 import SceneControls from "@/components/SceneControls";
 import SystemDiagram from "@/components/SystemDiagram";
 import { projects, getProject } from "@/data/projects";
@@ -184,6 +185,11 @@ export default async function CaseStudy({
         </Link>
       </main>
       <Footer />
+      <NextPage
+        href={`/work/${next.slug}`}
+        eyebrow={`NEXT PROJECT / ${next.number}`}
+        title={next.title}
+      />
     </>
   );
 }

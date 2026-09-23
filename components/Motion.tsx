@@ -2,13 +2,14 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import dynamic from "next/dynamic";
-import CursorTrail from "./CursorTrail";
+import Cursor from "./Cursor";
 const Graphics = dynamic(() => import("@/components/canvas/Graphics"), {
   ssr: false,
 });
 const RouteTransition = dynamic(() => import("./RouteTransition"), {
   ssr: false,
 });
+const SmoothScroll = dynamic(() => import("./SmoothScroll"), { ssr: false });
 
 export default function Motion() {
   const path = usePathname();
@@ -63,8 +64,9 @@ export default function Motion() {
   }, [path, reduced]);
   return (
     <>
+      {!reduced && <SmoothScroll />}
       {graphics && <Graphics />}
-      {!reduced && <CursorTrail />}
+      {!reduced && <Cursor />}
       {!reduced && <RouteTransition reduced={reduced} />}
       {!reduced && <div className="scroll-progress" aria-hidden="true" />}
       <div className="motion-setting">

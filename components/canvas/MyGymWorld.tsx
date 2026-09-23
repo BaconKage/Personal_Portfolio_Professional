@@ -13,7 +13,12 @@ const locations = [
   [0, 0, 3.45],
 ];
 
-export default function MyGymWorld({ progress, pointer, step }: SceneProps) {
+export default function MyGymWorld({
+  progress,
+  pointer,
+  step,
+  active,
+}: SceneProps) {
   const group = useRef<THREE.Group>(null);
   const bodies = useRef<THREE.InstancedMesh>(null);
   const edges = useRef<THREE.InstancedMesh>(null);
@@ -42,6 +47,7 @@ export default function MyGymWorld({ progress, pointer, step }: SceneProps) {
       mesh?.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
   }, []);
   useFrame((_, delta) => {
+    if (!active.current) return;
     const dt = Math.min(delta, 0.04);
     motionTime.current += dt;
     const time = motionTime.current;

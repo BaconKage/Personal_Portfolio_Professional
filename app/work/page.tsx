@@ -44,6 +44,7 @@ export default function Work() {
               className={`index-project index-${p.slug}`}
               href={`/work/${p.slug}`}
               key={p.slug}
+              data-cursor="view"
             >
               <div className="index-art">
                 <Artwork scene={p.slug} />

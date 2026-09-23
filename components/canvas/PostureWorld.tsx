@@ -39,7 +39,7 @@ function pose(phase: number): number[][] {
   ];
 }
 const poses = [pose(0), pose(1), pose(2)];
-export default function PostureWorld({ step, pointer }: SceneProps) {
+export default function PostureWorld({ step, pointer, active }: SceneProps) {
   const group = useRef<THREE.Group>(null);
   const joints = useRef<(THREE.Mesh | null)[]>([]);
   const targetPosition = useMemo(() => new THREE.Vector3(), []);
@@ -53,6 +53,7 @@ export default function PostureWorld({ step, pointer }: SceneProps) {
   );
   useEffect(() => () => geo.dispose(), [geo]);
   useFrame((_, dt) => {
+    if (!active.current) return;
     const target = poses[step.current] || poses[0];
     const blend = 1 - Math.exp(-5 * dt);
     joints.current.forEach((m, i) => {

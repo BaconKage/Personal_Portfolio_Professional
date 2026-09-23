@@ -14,6 +14,7 @@ export default function PortalWorld({
   quality,
   step,
   layout,
+  active,
 }: SceneProps) {
   const group = useRef<THREE.Group>(null);
   const buffers = useMemo(
@@ -76,6 +77,7 @@ export default function PortalWorld({
     [materials],
   );
   useFrame(({ gl }, delta) => {
+    if (!active.current) return;
     if (document.hidden) return;
     const dt = Math.min(delta, 0.04),
       r = layout.section;

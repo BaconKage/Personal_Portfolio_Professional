@@ -16,4 +16,6 @@ export type SceneProps = {
   element: HTMLElement;
   camera: PerspectiveCamera;
   layout: SceneLayout;
+  /** False while mounted off-screen: worlds skip their per-frame work. */
+  active: { current: boolean };
 };

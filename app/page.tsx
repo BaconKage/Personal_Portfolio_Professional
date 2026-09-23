@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import KineticText from "@/components/KineticText";
+import RollingText from "@/components/RollingText";
 import NeuralPrompt from "@/components/NeuralPrompt";
 import ReadingText from "@/components/ReadingText";
 import ProjectPlayground from "@/components/ProjectPlayground";
@@ -8,6 +9,8 @@ import SignalJourney from "@/components/SignalJourney";
 import { projects } from "@/data/projects";
 import CoreInteraction from "@/components/CoreInteraction";
 import CoreIgnition from "@/components/CoreIgnition";
+import Preloader from "@/components/Preloader";
+import NextPage from "@/components/NextPage";
 import SocialLinks from "@/components/SocialLinks";
 import Artwork from "@/components/Artwork";
 import { profile, research } from "@/data/profile";
@@ -67,6 +70,7 @@ export const metadata: Metadata = {
 export default function Home() {
   return (
     <main id="main">
+      <Preloader />
       <section className="hero">
         <div className="hero-topline">
           <p className="hero-name">Shubhang <span>Srinivas Varda</span></p>
@@ -133,6 +137,7 @@ export default function Home() {
             className={`project project-${p.slug}`}
             key={p.slug}
             data-scene={p.slug}
+            data-cursor="view"
           >
             <div className="project-top eyebrow">
               <span>
@@ -156,7 +161,7 @@ export default function Home() {
             <div className="project-bottom">
               <p>{p.description}</p>
               <Link className="project-cta" href={`/work/${p.slug}`}>
-                View case study <span>↗</span>
+                <RollingText text="View case study" /> <span>↗</span>
               </Link>
             </div>
             <span className="art-caption">SYSTEM STUDY / {p.number}</span>
@@ -165,7 +170,7 @@ export default function Home() {
         <Link className="all-work" href="/work">
           <span>There’s more to the story.</span>
           <span>
-            All work <sup>05</sup> ↗
+            <RollingText text="All work" /> <sup>05</sup> ↗
           </span>
         </Link>
       </section>
@@ -306,8 +311,11 @@ export default function Home() {
       <footer className="footer">
         <span>© {new Date().getFullYear()} SHUBHANG SRINIVAS VARDA</span>
         <span>DESIGNED & ENGINEERED WITH INTENT.</span>
-        <a href="#main">BACK TO TOP ↑</a>
+        <a href="#main">
+          <RollingText text="BACK TO TOP" /> ↑
+        </a>
       </footer>
+      <NextPage href="/work" eyebrow="THERE’S MORE TO THE STORY" title="All work" />
     </main>
   );
 }
