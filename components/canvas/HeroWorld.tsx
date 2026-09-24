@@ -24,6 +24,11 @@ const RING_RADIUS = 1.98;
 const CYAN = new THREE.Color("#3fd2ff");
 const ICE = new THREE.Color("#d2f8ff");
 const BLUE = new THREE.Color("#2f7dff");
+// Base finishes, faded up from darkness during the intro.
+const GUNMETAL = new THREE.Color("#3a4150");
+const DARK_METAL = new THREE.Color("#1b212c");
+const TUNNEL_METAL = new THREE.Color("#252c39");
+const COPPER = new THREE.Color("#f0a16c");
 
 // Light that adds to the page without darkening it: premultiplied "plus".
 const lightBlend = {
@@ -242,6 +247,8 @@ export default function HeroWorld({
   const light = useRef<THREE.PointLight>(null);
   const wave = useRef<THREE.Mesh>(null);
   const wash = useRef<THREE.Mesh>(null);
+  const rays = useRef<THREE.Mesh>(null);
+  const sparkPoints = useRef<THREE.Points>(null);
   const element = useRef<HTMLElement | null>(null);
   const motion = useRef({ time: 0, inflow: 0, orbit: 0, spinA: 0, spinB: 0 });
 
@@ -713,10 +720,10 @@ export default function HeroWorld({
 
     // Metal arrives from darkness during the intro.
     const fade = 0.05 + 0.95 * present;
-    parts.gunmetal.color.set("#3a4150").multiplyScalar(fade);
-    parts.darkMetal.color.set("#1b212c").multiplyScalar(fade);
-    parts.tunnelMetal.color.set("#252c39").multiplyScalar(fade);
-    parts.copper.color.set("#f0a16c").multiplyScalar(fade);
+    parts.gunmetal.color.copy(GUNMETAL).multiplyScalar(fade);
+    parts.darkMetal.color.copy(DARK_METAL).multiplyScalar(fade);
+    parts.tunnelMetal.color.copy(TUNNEL_METAL).multiplyScalar(fade);
+    parts.copper.color.copy(COPPER).multiplyScalar(fade);
     parts.glass.opacity = 0.18 * present;
 
     // Acrylic blocks light in order around the ring; online, a current runs.
@@ -776,6 +783,11 @@ export default function HeroWorld({
     parts.rays.uniforms.uTime.value = t;
     parts.rays.uniforms.uIntensity.value =
       frame.energy * 0.58 * flicker + flash * 1.0;
+    // Both are dark at rest: skip their near-full-screen fill until they light.
+    if (rays.current)
+      rays.current.visible = parts.rays.uniforms.uIntensity.value > 0.001;
+    if (sparkPoints.current)
+      sparkPoints.current.visible = m.inflow > 0.001 || m.orbit > 0.001;
     sparks.material.uniforms.uTime.value = t;
     sparks.material.uniforms.uInflow.value = m.inflow;
     sparks.material.uniforms.uOrbit.value = m.orbit;
@@ -854,6 +866,7 @@ export default function HeroWorld({
             decay={2}
           />
           <mesh
+            ref={rays}
             geometry={parts.plane}
             material={parts.rays}
             scale={9}
@@ -1001,6 +1014,7 @@ export default function HeroWorld({
             position={[0, 0, 0.45]}
           />
           <points
+            ref={sparkPoints}
             geometry={sparks.geometry}
             material={sparks.material}
             frustumCulled={false}

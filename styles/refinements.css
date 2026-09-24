@@ -202,10 +202,12 @@
   padding-bottom: 0.12em;
   margin-bottom: -0.12em;
 }
+/* No will-change: dozens of permanent per-letter layers cost the compositor
+   on every frame. Their 3D reveal and hover roll are promoted only while they
+   run, and at rest they paint into the title's one layer. */
 .kinetic-letter {
   display: inline-block;
   position: relative;
-  will-change: transform;
 }
 .kinetic-letter > span {
   display: block;
@@ -421,7 +423,7 @@ html[data-motion="reduced"] .signal-arrival { display: none; }
 .hero .hero-art[data-ready="true"]::after { display: none; }
 .hero .hero-topline { z-index: 3; align-items: flex-start; }
 .hero .hero-name { font-size: clamp(34px,4.3vw,76px); max-width: 78%; letter-spacing: -.06em; }
-.hero h1 { position: relative; margin-top: clamp(70px,12svh,140px); font-size: clamp(64px,7.7vw,118px); max-width: 65%; z-index: 3; text-shadow: 0 3px 30px #060b1888; }
+.hero h1 { position: relative; margin-top: clamp(70px,12svh,140px); font-size: clamp(64px,7.7vw,118px); max-width: 65%; z-index: 3; }
 .hero h1 .hero-line-inner > span { color: #a8c0ff; }
 .hero .hero-bottom { z-index: 3; padding-top: 20px; padding-bottom: 22px; }
 .hero .hero-bottom p span { color: #b1bdd5; }

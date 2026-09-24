@@ -46,7 +46,7 @@ export function mountChoreography() {
     }
     document.querySelectorAll<HTMLElement>(".project").forEach((el, i) => {
       const title = el.querySelector(".project-heading");
-      gsap.from(el, {
+      const radius = gsap.from(el, {
         borderRadius: desktop ? 110 : 32,
         scrollTrigger: {
           trigger: el,
@@ -89,7 +89,21 @@ export function mountChoreography() {
           if (!sheeted()) reveal.reverse();
         },
       });
+      // Once its WebGL sheet paints the card (corners included), the DOM card
+      // is transparent: scrubbing its radius would only repaint it per frame.
+      let rounding = true;
+      const syncRadius = () => {
+        const trigger = radius.scrollTrigger;
+        const sheet = el.dataset.sheet === "true";
+        if (!trigger || sheet !== rounding) return;
+        rounding = !sheet;
+        if (sheet) {
+          trigger.disable(false);
+          gsap.set(el, { clearProps: "borderRadius" });
+        } else trigger.enable();
+      };
       const land = () => {
+        syncRadius();
         if (sheeted()) {
           if (el.dataset.landed === "true") reveal.play();
           else reveal.reverse();
@@ -99,7 +113,7 @@ export function mountChoreography() {
       const landing = new MutationObserver(land);
       landing.observe(el, {
         attributes: true,
-        attributeFilter: ["data-landed"],
+        attributeFilter: ["data-landed", "data-sheet"],
       });
       landing.observe(document.documentElement, {
         attributes: true,

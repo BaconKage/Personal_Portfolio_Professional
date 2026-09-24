@@ -475,17 +475,53 @@ html[data-preloader="exit"] .preloader-spec {
     border-color 1.6s ease,
     box-shadow 1.6s ease;
 }
-.hero[data-core-phase="charging"] h1 {
-  text-shadow: 0 0 28px #2f7dff55;
-  transition-duration: 2.6s;
-}
 .hero[data-core-phase="online"] h1 {
   color: #f4fcff;
+  animation: reactor-flicker 0.7s steps(1) 1;
+}
+/* The headline's shadows live on pre-rasterised copies of each line (behind
+   the text, clipped by the line mask like the text) and cross-fade with
+   opacity on the compositor. Transitioning text-shadow itself re-rasterised
+   the whole headline, blurs and all, on every frame of the power change. */
+.hero h1 .hero-line-inner {
+  position: relative;
+}
+.hero h1 .hero-line-inner::before,
+.hero h1 .hero-line-inner::after {
+  content: attr(data-glow);
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  color: transparent;
+  pointer-events: none;
+  transition: opacity 1.6s ease;
+  will-change: opacity;
+}
+/* At rest: a soft dark halo that keeps the copy legible over the reactor. */
+.hero h1 .hero-line-inner::before {
+  text-shadow: 0 3px 30px #060b1888;
+}
+.hero h1 .hero-line-inner::after {
   text-shadow:
     0 0 10px #8fe6ff66,
     0 0 42px #2f9dff88,
     0 0 110px #2f7dff55;
-  animation: reactor-flicker 0.7s steps(1) 1;
+  opacity: 0;
+}
+.hero[data-core-phase="charging"] h1 .hero-line-inner::before {
+  opacity: 0;
+  transition-duration: 2.6s;
+}
+/* Charging: a faint blue bloom that builds toward the neon glow. */
+.hero[data-core-phase="charging"] h1 .hero-line-inner::after {
+  opacity: 0.35;
+  transition-duration: 2.6s;
+}
+.hero[data-core-phase="online"] h1 .hero-line-inner::before {
+  opacity: 0;
+}
+.hero[data-core-phase="online"] h1 .hero-line-inner::after {
+  opacity: 1;
 }
 .hero[data-core-phase="online"] h1 .hero-line-inner > span {
   color: #9eeaff;
@@ -623,4 +659,48 @@ html[data-motion="reduced"] .next-page-hint {
   .project[data-landed="true"]:hover .kinetic-letter > span {
     transform: translateY(-100%);
   }
+}
+
+/* ─── Compositing: scroll-scrubbed elements move on the GPU ─── */
+/* GSAP writes these transforms and opacities on every scroll frame. On their
+   own layers the compositor moves them; otherwise the page repaints their text
+   (and the headline's wide glow) on the main thread each frame. */
+html:not([data-motion="reduced"])
+  :is(
+    .hero h1,
+    .hero-art,
+    .project-heading,
+    .discipline-band > div,
+    .research-mark,
+    .signal-copy h2,
+    .signal-arrival,
+    .signal-meter span,
+    .scroll-progress
+  ) {
+  will-change: transform, opacity;
+}
+
+/* ─── Text lens: text under the pointer changes colour (TextLens.tsx) ─── */
+/* The brush is the element's background, clipped to its glyphs. Children
+   keep their own fill unless the brush reaches them too. */
+/* !important: a more specific `background:` shorthand (e.g. a reset button's
+   `background: none`) resets the clip to the whole box, painting the brush as
+   a rectangle instead of inside the letters. */
+[data-lens] {
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  text-shadow: none !important;
+}
+[data-lens] > :not([data-lens]) {
+  -webkit-text-fill-color: currentColor;
+}
+.hero {
+  --lens: #6fe3ff;
+}
+/* Plain headline words sit in their own spans, above the line's glow
+   copies, so the glow never paints over the brush. They keep the line's
+   colour; only the accent span is tinted. */
+.hero h1 .hero-line-inner > span.hero-plain {
+  color: inherit;
 }

@@ -80,11 +80,14 @@ export default function Home() {
         </div>
         <h1 tabIndex={-1} aria-label="Software with an AI core.">
           <span className="hero-line">
-            <span className="hero-line-inner">Software with</span>
+            <span className="hero-line-inner" data-glow="Software with">
+              <span className="hero-plain">Software with</span>
+            </span>
           </span>
           <span className="hero-line">
-            <span className="hero-line-inner">
-              an <span>AI core.</span>
+            <span className="hero-line-inner" data-glow="an AI core.">
+              <span className="hero-plain">an </span>
+              <span>AI core.</span>
             </span>
           </span>
         </h1>

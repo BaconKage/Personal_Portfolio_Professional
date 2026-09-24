@@ -55,3 +55,32 @@ test("Resolution stays bounded during prolonged load, resizing, and preference r
   budget.sample(Infinity);
   assert.equal(budget.dpr, .6);
 });
+test("GPU class sets the starting budget before any frame is measured", () => {
+  const { getGpuTier } = context.exports;
+  const screen = { width: 1440, height: 900, dpr: 2, coarse: false, cores: 8, memory: 8 };
+  assert.equal(getGpuTier("ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero)), SwiftShader driver)"), "software");
+  assert.equal(getGpuTier("ANGLE (Intel, Intel(R) UHD Graphics 620 Direct3D11 vs_5_0 ps_5_0, D3D11)"), "low");
+  assert.equal(getGpuTier("Mali-G52 MC2"), "low");
+  assert.equal(getGpuTier("Adreno (TM) 506"), "low");
+  for (const gpu of ["ANGLE (AMD, AMD Radeon(TM) Graphics Direct3D11 vs_5_0 ps_5_0, D3D11)", "Apple GPU", "Adreno (TM) 740", "Mali-G78", "ANGLE (Intel, Intel(R) Iris(R) Xe Graphics Direct3D11 vs_5_0 ps_5_0, D3D11)", ""])
+    assert.equal(getGpuTier(gpu), "standard", gpu);
+  const software = getRenderProfile({ ...screen, gpu: "SwiftShader" });
+  assert.ok(software.maxDpr <= 0.75 && software.minDpr <= software.maxDpr);
+  assert.equal(software.antialias, false);
+  assert.equal(software.sheetSamples, 0);
+  const low = getRenderProfile({ ...screen, gpu: "Intel(R) HD Graphics 4000" });
+  assert.ok(low.maxDpr <= 1.25 && low.geometryQuality < 1 && low.sheetSamples === 2);
+  const standard = getRenderProfile({ ...screen, gpu: "Apple GPU" });
+  assert.ok(standard.maxDpr > low.maxDpr && standard.antialias && standard.sheetSamples === 4);
+  assert.ok(software.geometryQuality > 0, "Effects must stay enabled on every tier");
+});
+test("Only sustained misses at the lowest resolution shed optional passes", () => {
+  const budget = createRenderBudget(1.25, 0.75);
+  run(budget, 16.67, 3000);
+  run(budget, 45, 40);
+  run(budget, 16.67, 1000);
+  assert.equal(budget.saturated, false, "A burst of slow frames never sheds passes");
+  run(budget, 40, 3000);
+  assert.equal(budget.dpr, 0.75);
+  assert.equal(budget.saturated, true);
+});

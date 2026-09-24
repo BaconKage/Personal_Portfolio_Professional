@@ -133,10 +133,14 @@ const geometry = new THREE.PlaneGeometry(1, 1, 32, 32);
 
 export type ProjectSheet = ReturnType<typeof createProjectSheet>;
 
-export function createProjectSheet(renderer: THREE.WebGLRenderer, id: SceneId) {
+export function createProjectSheet(
+  renderer: THREE.WebGLRenderer,
+  id: SceneId,
+  samples = 4,
+) {
   const bg = backgrounds[id] ?? flat("#101621");
   const target = new THREE.WebGLRenderTarget(1, 1, {
-    samples: 4,
+    samples,
     depthBuffer: true,
     stencilBuffer: false,
     generateMipmaps: false,
@@ -176,6 +180,20 @@ export function createProjectSheet(renderer: THREE.WebGLRenderer, id: SceneId) {
   const clearColor = new THREE.Color();
 
   return {
+    /**
+     * Compile every program this sheet will use before it is first drawn:
+     * the world's own materials as they render into the sheet texture (no
+     * tone mapping, linear output: different programs from on-screen ones),
+     * and the sheet itself. Linking on first use stalls a frame for 50-200ms.
+     */
+    compile(world: THREE.Scene, worldCamera: THREE.Camera) {
+      const previous = renderer.getRenderTarget();
+      renderer.setRenderTarget(target);
+      const materials = renderer.compile(world, worldCamera);
+      renderer.setRenderTarget(previous);
+      renderer.compile(scene, camera).forEach((m) => materials.add(m));
+      return materials;
+    },
     /**
      * Render `world` into the sheet texture, then draw the sheet on screen.
      * `rect` is the card's DOM rect; `ratio` 0..1 is how far it has landed.

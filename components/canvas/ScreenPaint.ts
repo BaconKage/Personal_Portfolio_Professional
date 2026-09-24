@@ -2,27 +2,35 @@ import * as THREE from "three";
 
 /**
  * Pointer "screen paint": a low-resolution velocity field the cursor paints
- * into, advected by its own motion and curl noise, then used by a post pass
- * to smear the rendered frame along the stroke with an iridescent fringe.
- * Modelled on lusion.co's ScreenPaint + ScreenPaintDistortion.
+ * into, advected by its own motion and curl noise (the field is modelled on
+ * lusion.co's ScreenPaint). A post pass then disturbs the rendered frame the
+ * way buttermax.net's fluid disturbs its media: the image warps along the
+ * flow, steps into wavy pixel bands, and splits into its RGB channels.
  *
  * Texel layout: xy = velocity (biased by 0.5), z/w = fast/slow stroke weight.
  */
 
 const settings = {
-  radiusDistanceRange: 100,
+  // Brush: reaches full width at a gentle speed, broad like buttermax's.
+  radiusDistanceRange: 60,
+  radiusScreenFraction: 1 / 14,
   pushStrength: 25,
   accelerationDissipation: 0.8,
+  // Per 60Hz frame; scaled by the real frame time so every refresh rate
+  // leaves the same trail.
   velocityDissipation: 0.975,
   weight1Dissipation: 0.95,
   weight2Dissipation: 0.8,
   curlScale: 0.02,
   curlStrength: 3,
-  amount: 3,
-  rgbShift: 0.5,
-  multiplier: 5,
-  colorMultiplier: 10,
-  shade: 1.25,
+  /** How far the flow pushes the image, in CSS px at full strength. */
+  warp: 64,
+  /** Height of the pixel bands the image steps into, in CSS px. */
+  band: 8,
+  /** Base shift along the stroke, as in buttermax (0.05 of the view). */
+  drift: 0.02,
+  /** RGB channel split, in CSS px at full strength. */
+  rgbSplit: 24,
 };
 
 const vertex = /* glsl */ `
@@ -117,41 +125,38 @@ void main() {
 const distortionFragment = /* glsl */ `
 uniform sampler2D u_texture;
 uniform sampler2D u_screenPaintTexture;
-uniform vec2 u_screenPaintTexelSize;
-uniform float u_amount;
-uniform float u_rgbShift;
-uniform float u_multiplier;
-uniform float u_colorMultiplier;
-uniform float u_shade;
+uniform vec2 u_resolution;
+uniform float u_time;
+uniform float u_warp;
+uniform float u_band;
+uniform float u_drift;
+uniform float u_rgbSplit;
 varying vec2 v_uv;
-float ign(vec2 p) {
-  return fract(52.9829189 * fract(dot(p, vec2(0.06711056, 0.00583715))));
-}
 void main() {
   vec4 data = texture2D(u_screenPaintTexture, v_uv);
-  float weight = (data.z + data.w) * 0.5;
-  if (weight < 0.002) {
+  float fluid = (data.z + data.w) * 0.5;
+  if (fluid < 0.002) {
     gl_FragColor = texture2D(u_texture, v_uv);
     return;
   }
-  vec2 vel = (0.5 - data.xy - 0.001) * 2.0 * weight;
-  vec2 velocity = vel * u_amount / 4.0 * u_screenPaintTexelSize * u_multiplier;
-  vec2 jitter = vec2(ign(gl_FragCoord.xy + vec2(17.0, 29.0)),
-                     ign(gl_FragCoord.xy + vec2(59.0, 11.0)));
-  vec2 uv = v_uv + jitter * velocity;
-  vec4 color = vec4(0.0);
-  for (int i = 0; i < 9; i++) {
-    color += texture2D(u_texture, uv);
-    uv += velocity;
-  }
-  color /= 9.0;
-  vec3 tint = sin(vec3(vel.x + vel.y) * 40.0 + vec3(0.0, 2.0, 4.0) * u_rgbShift) *
-    smoothstep(0.4, -0.9, weight) * u_shade * max(abs(vel.x), abs(vel.y)) *
-    u_colorMultiplier;
-  color.rgb = max(color.rgb + tint, 0.0);
-  // The canvas is premultiplied: let the fringe carry its own coverage so it
-  // also reads over the page behind transparent areas.
-  color.a = max(color.a, max(color.r, max(color.g, color.b)));
+  vec2 px = 1.0 / u_resolution;
+  vec2 vel = (0.5 - data.xy - 0.001) * 2.0 * fluid;
+  // The image is pushed along the flow.
+  vec2 uv = v_uv - vel * u_warp * px + fluid * u_drift;
+  // Pixel stepping (buttermax's media shader): a sawtooth offset snaps each
+  // band of rows onto one row, and the bands wave across the image.
+  float period = u_band * px.y;
+  float phase = v_uv.y + sin(v_uv.x * 5.0 + u_time * 0.5) * 0.5 + fluid +
+    sin(u_time * 0.3) * 2.5;
+  uv.y -= mod(phase, period) * fluid;
+  // RGB split along the flow, strongest where the paint is.
+  vec2 dir = length(vel) > 1e-4 ? normalize(vel) : vec2(1.0, 0.0);
+  vec2 split = dir * fluid * u_rgbSplit * px;
+  vec4 r = texture2D(u_texture, uv + split);
+  vec4 g = texture2D(u_texture, uv);
+  vec4 b = texture2D(u_texture, uv - split);
+  vec4 color = vec4(r.r, g.g, b.b, max(g.a, max(r.a, b.a)));
+  color.rgb *= mix(1.0, 0.98, fluid);
   gl_FragColor = color;
 }`;
 
@@ -234,15 +239,16 @@ export function createScreenPaint(renderer: THREE.WebGLRenderer) {
   const frame = new THREE.FramebufferTexture(1, 1);
   frame.colorSpace = THREE.NoColorSpace;
   frame.minFilter = frame.magFilter = THREE.LinearFilter;
+  const resolution = new THREE.Vector2(1, 1);
   const distortion = material(distortionFragment, {
     u_texture: { value: frame },
     u_screenPaintTexture: { value: curr.texture },
-    u_screenPaintTexelSize: { value: paintTexelSize },
-    u_amount: { value: settings.amount },
-    u_rgbShift: { value: settings.rgbShift },
-    u_multiplier: { value: settings.multiplier },
-    u_colorMultiplier: { value: settings.colorMultiplier },
-    u_shade: { value: settings.shade },
+    u_resolution: { value: resolution },
+    u_time: { value: 0 },
+    u_warp: { value: settings.warp },
+    u_band: { value: settings.band },
+    u_drift: { value: settings.drift },
+    u_rgbSplit: { value: settings.rgbSplit },
   });
   distortion.transparent = false;
 
@@ -251,6 +257,20 @@ export function createScreenPaint(renderer: THREE.WebGLRenderer) {
     renderer.setRenderTarget(rt);
     renderer.render(scene, camera);
   };
+  // Link every pass for the target it draws into, in the background, before
+  // the first mouse move. Linking on first use stalls that frame.
+  const previousTarget = renderer.getRenderTarget();
+  for (const [mat, rt] of [
+    [paint, curr],
+    [copy, low],
+    [blur, lowBlur],
+    [distortion, null],
+  ] as const) {
+    quad.material = mat;
+    renderer.setRenderTarget(rt);
+    renderer.compile(scene, camera);
+  }
+  renderer.setRenderTarget(previousTarget);
   const clear = () => {
     const color = new THREE.Color(),
       alpha = renderer.getClearAlpha();
@@ -293,6 +313,14 @@ export function createScreenPaint(renderer: THREE.WebGLRenderer) {
       moved: boolean,
     ) {
       if (!width) return;
+      // Frame-rate independent fading: the same trail at 60, 120 or 144Hz.
+      const frames = dt * 60;
+      (paint.uniforms.u_dissipations.value as THREE.Vector3).set(
+        Math.pow(settings.velocityDissipation, frames),
+        Math.pow(settings.weight1Dissipation, frames),
+        Math.pow(settings.weight2Dissipation, frames),
+      );
+      distortion.uniforms.u_time.value += dt;
       [prev, curr] = [curr, prev];
       paint.uniforms.u_prevPaintTexture.value = prev.texture;
       distortion.uniforms.u_screenPaintTexture.value = curr.texture;
@@ -302,7 +330,7 @@ export function createScreenPaint(renderer: THREE.WebGLRenderer) {
       const distance = moved
         ? Math.hypot(pointer.x - previous.x, pointer.y - previous.y)
         : 0;
-      const maxRadius = Math.max(40, width / 20);
+      const maxRadius = Math.max(56, width * settings.radiusScreenFraction);
       const radius =
         (THREE.MathUtils.clamp(distance / settings.radiusDistanceRange, 0, 1) *
           maxRadius *
@@ -317,7 +345,9 @@ export function createScreenPaint(renderer: THREE.WebGLRenderer) {
         started = true;
       }
       step.set(to.x - from.x, to.y - from.y).multiplyScalar(dt * 0.8);
-      vel.multiplyScalar(settings.accelerationDissipation).add(step);
+      vel
+        .multiplyScalar(Math.pow(settings.accelerationDissipation, frames))
+        .add(step);
       renderer.setScissorTest(false);
       draw(paint, curr);
       copy.uniforms.u_texture.value = curr.texture;
@@ -345,6 +375,7 @@ export function createScreenPaint(renderer: THREE.WebGLRenderer) {
       renderer.setRenderTarget(null);
       renderer.setScissorTest(false);
       renderer.setViewport(0, 0, cssWidth, cssHeight);
+      resolution.set(cssWidth, cssHeight);
       renderer.copyFramebufferToTexture(frame);
       draw(distortion, null);
     },

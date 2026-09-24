@@ -5,6 +5,7 @@ import {
   Component,
   Suspense,
   lazy,
+  startTransition,
   useEffect,
   useMemo,
   useRef,
@@ -59,8 +60,30 @@ type Slot = {
   ready: boolean;
   layout: SceneLayout;
 };
+/** The GPU's name, read once from a throwaway context before the real one. */
+let gpuName: string | undefined;
+function probeGpu() {
+  if (gpuName !== undefined) return gpuName;
+  gpuName = "";
+  try {
+    const probe = document.createElement("canvas").getContext("webgl2");
+    if (probe) {
+      const info = probe.getExtension("WEBGL_debug_renderer_info");
+      gpuName = String(
+        probe.getParameter(
+          info ? info.UNMASKED_RENDERER_WEBGL : probe.RENDERER,
+        ) || "",
+      );
+      probe.getExtension("WEBGL_lose_context")?.loseContext();
+    }
+  } catch {}
+  return gpuName;
+}
 function deviceProfile() {
-  const nav = navigator as Navigator & { deviceMemory?: number };
+  const nav = navigator as Navigator & {
+    deviceMemory?: number;
+    connection?: { saveData?: boolean };
+  };
   return getRenderProfile({
     width: innerWidth,
     height: innerHeight,
@@ -68,8 +91,11 @@ function deviceProfile() {
     coarse: matchMedia("(pointer: coarse)").matches,
     cores: nav.hardwareConcurrency || 8,
     memory: nav.deviceMemory || 8,
+    gpu: probeGpu(),
+    saveData: !!nav.connection?.saveData,
   });
 }
+type Profile = ReturnType<typeof deviceProfile>;
 class Boundary extends Component<
   { children: React.ReactNode },
   { failed: boolean }
@@ -91,11 +117,13 @@ class Boundary extends Component<
 }
 function WorldSlot({
   slot,
+  sheet,
   quality,
   pointer,
   onReady,
 }: {
   slot: Slot;
+  sheet: ProjectSheet | null;
   quality: number;
   pointer: { x: number; y: number };
   onReady: () => void;
@@ -108,7 +136,9 @@ function WorldSlot({
     // Programs compile in parallel before first use, so scrolling a world
     // into view never stalls a frame. The poster covers the wait. This is
     // compileAsync's polling, made safe for worlds disposed mid-compile.
-    const pending = gl.compile(slot.scene, slot.camera);
+    // A card drawn as a sheet renders into a texture, which needs its own
+    // program variants: compile those, or its first frame links them inline.
+    let pending = new Set<THREE.Material>();
     const poll = () => {
       if (cancelled) return;
       for (const material of pending) {
@@ -126,14 +156,21 @@ function WorldSlot({
       slot.ready = true;
       onReady();
     };
-    poll();
+    // In its own task: building shader source is CPU work, and joined to the
+    // world's mount it made one long frame instead of two short ones.
+    timer = setTimeout(() => {
+      pending = sheet
+        ? sheet.compile(slot.scene, slot.camera)
+        : gl.compile(slot.scene, slot.camera);
+      poll();
+    }, 0);
     return () => {
       cancelled = true;
       clearTimeout(timer);
       slot.ready = false;
       delete slot.element.dataset.ready;
     };
-  }, [slot, gl, onReady]);
+  }, [slot, sheet, gl, onReady]);
   return createPortal(
     <>
       <ambientLight intensity={1.1} />
@@ -157,13 +194,14 @@ function WorldSlot({
 }
 function Renderer({
   elements,
+  profile,
   onFailure,
 }: {
   elements: HTMLElement[];
+  profile: Profile;
   onFailure: () => void;
 }) {
   const { gl, advance, setDpr } = useThree();
-  const [profile] = useState(deviceProfile);
   const budget = useMemo(
     () => createRenderBudget(profile.maxDpr, profile.minDpr),
     [profile],
@@ -178,7 +216,10 @@ function Renderer({
   const diagnostics = useRef({ frames: 0, elapsed: 0 });
   const measuring = useRef({ until: Infinity, height: 0 });
   const bridge = useMemo(() => createTransitionField(), []);
-  useEffect(() => () => bridge.dispose(), [bridge]);
+  useEffect(() => {
+    gl.compile(bridge.scene, bridge.camera);
+    return () => bridge.dispose();
+  }, [bridge, gl]);
   // The cursor paints a fading velocity trail that distorts the frame.
   // Mouse-only, and only where half-float render targets are available.
   const paint = useMemo(() => {
@@ -239,6 +280,59 @@ function Renderer({
     active.current = [];
     setMounted([]);
   }, [slots]);
+  // A world's first mount (its geometry, materials and React commit) is a
+  // long task. Mounted on approach, it lands mid-scroll as a hitch, so the
+  // rest mount ahead of time: one per idle moment, never during the intro
+  // or while the reader is scrolling. Mounted worlds idle at no cost.
+  useEffect(() => {
+    let cancelled = false,
+      idle = 0;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const whenIdle = (fn: () => void, delay: number) => {
+      timer = setTimeout(() => {
+        if (typeof requestIdleCallback === "function")
+          idle = requestIdleCallback(fn, { timeout: 2500 });
+        else fn();
+      }, delay);
+    };
+    const busy = () =>
+      document.hidden ||
+      performance.now() < measuring.current.until ||
+      document.documentElement.dataset.preloader === "loading" ||
+      !!document.querySelector(
+        "[data-ignition='waiting'],[data-ignition='running']",
+      );
+    const next = () => {
+      if (cancelled) return;
+      if (busy()) return whenIdle(next, 500);
+      const slot = slots.find(
+        (s) => !mountedSlots.current.has(s) && s.element.offsetWidth > 0,
+      );
+      if (!slot) return;
+      // Fetch its code first, then mount in the next quiet moment.
+      const mount = () => {
+        if (cancelled) return;
+        if (busy()) return whenIdle(mount, 500);
+        if (!mountedSlots.current.has(slot)) {
+          mountedSlots.current.add(slot);
+          // A transition renders in slices, yielding to frames.
+          startTransition(() => setMounted(Array.from(mountedSlots.current)));
+          // Mounting is a one-off cost, not sustained load.
+          budget.reset();
+        }
+        whenIdle(next, 600);
+      };
+      preload(slot.id)
+        .then(() => whenIdle(mount, 0))
+        .catch(() => {});
+    };
+    whenIdle(next, 1500);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+      if (typeof cancelIdleCallback === "function") cancelIdleCallback(idle);
+    };
+  }, [slots, budget]);
   // Home project cards land as bending sheets (needs WebGL2 MSAA targets).
   const sheets = useRef(new Map<Slot, ProjectSheet>());
   // Each sheet's displayed landing progress, smoothed in time (see below).
@@ -264,7 +358,7 @@ function Renderer({
       return null;
     let sheet = sheets.current.get(s);
     if (!sheet) {
-      sheet = createProjectSheet(gl, s.id);
+      sheet = createProjectSheet(gl, s.id, profile.sheetSamples);
       sheets.current.set(s, sheet);
     }
     return sheet;
@@ -334,7 +428,7 @@ function Renderer({
         hoverPointer.current.x = event.clientX;
         hoverPointer.current.y = event.clientY;
       }
-      if (paint && event.pointerType === "mouse") {
+      if (paint && event.pointerType === "mouse" && !budget.saturated) {
         const b = brush.current;
         b.x = event.clientX;
         b.y = event.clientY;
@@ -474,7 +568,10 @@ function Renderer({
         s.camera.updateMatrixWorld();
       }
     }
-    if (arrived) setMounted(Array.from(mountedSlots.current));
+    if (arrived) {
+      setMounted(Array.from(mountedSlots.current));
+      budget.reset();
+    }
     if (
       next.length !== active.current.length ||
       next.some((s, i) => s !== active.current[i])
@@ -491,7 +588,9 @@ function Renderer({
     if (document.hidden) return;
     const now = performance.now();
     const frame = ++frameCount.current;
-    const painting = !!paint && now < brush.current.until;
+    // Last resort on a device still missing frames at the lowest resolution:
+    // the trail is the one optional full-screen pass.
+    const painting = !!paint && !budget.saturated && now < brush.current.until;
     if (painting) {
       const b = brush.current;
       paint.resize(state.size.width, state.size.height);
@@ -691,6 +790,7 @@ function Renderer({
         >
           <WorldSlot
             slot={s}
+            sheet={sheetFor(s)}
             quality={profile.geometryQuality}
             pointer={pointer.current}
             onReady={requestRender}
@@ -704,6 +804,7 @@ export default function Graphics() {
   const path = usePathname();
   const [elements, setElements] = useState<HTMLElement[]>([]);
   const [failed, setFailed] = useState(false);
+  const [profile] = useState(deviceProfile);
   useEffect(() => {
     setElements(
       Array.from(document.querySelectorAll<HTMLElement>("[data-scene]")),
@@ -729,15 +830,18 @@ export default function Graphics() {
           dpr={1}
           gl={{
             alpha: true,
-            antialias: true,
+            antialias: profile.antialias,
             powerPreference: "high-performance",
           }}
           onCreated={({ gl }) => {
             gl.setClearColor(0, 0);
+            // Reading shader logs waits for the driver to finish linking. The
+            // programs are known good; production skips the check.
+            gl.debug.checkShaderErrors = process.env.NODE_ENV !== "production";
           }}
           fallback={null}
         >
-          <Renderer elements={elements} onFailure={fail} />
+          <Renderer elements={elements} profile={profile} onFailure={fail} />
         </Canvas>
       </div>
     </Boundary>
