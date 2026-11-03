@@ -1,11 +1,12 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import { profile } from "@/data/profile";
 import { lockScroll, unlockScroll } from "@/lib/scroll";
 import SocialLinks from "./SocialLinks";
 import RollingText from "./RollingText";
+import CommandPalette, { openPalette } from "./CommandPalette";
 
 const menuLinks = [
   { href: "/work", label: "Work", note: "05" },
@@ -23,7 +24,11 @@ function localTime() {
   }).format(new Date());
 }
 
+const isMac = () => /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+const noop = () => () => {};
+
 export default function Navigation() {
+  const mod = useSyncExternalStore(noop, () => (isMac() ? "⌘" : "Ctrl"), () => "⌘");
   const [open, setOpen] = useState(false);
   const [floating, setFloating] = useState(false);
   const [time, setTime] = useState("");
@@ -117,6 +122,15 @@ export default function Navigation() {
               <RollingText text="Resume" /> ↗
             </a>
           )}
+          <button
+            className="palette-trigger"
+            onClick={openPalette}
+            aria-label="Open command palette"
+            aria-keyshortcuts="Meta+K Control+K"
+          >
+            <kbd>{mod}</kbd>
+            <kbd>K</kbd>
+          </button>
           <a className="contact-pill" href={`mailto:${profile.email}`}>
             <RollingText text="Let’s talk" /> <span>↗</span>
           </a>
@@ -140,6 +154,14 @@ export default function Navigation() {
         data-visible={floating && !open ? "true" : undefined}
         inert={!floating || open}
       >
+        <button
+          className="float-pill float-palette"
+          onClick={openPalette}
+          aria-label="Open command palette"
+          aria-keyshortcuts="Meta+K Control+K"
+        >
+          {mod} K
+        </button>
         <a className="float-pill float-talk" href={`mailto:${profile.email}`}>
           <RollingText text="Let’s talk" /> <span aria-hidden="true">↗</span>
         </a>
@@ -225,6 +247,7 @@ export default function Navigation() {
           </div>
         </div>
       </dialog>
+      <CommandPalette />
     </>
   );
 }

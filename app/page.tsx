@@ -14,6 +14,7 @@ import NextPage from "@/components/NextPage";
 import SocialLinks from "@/components/SocialLinks";
 import Artwork from "@/components/Artwork";
 import { profile, research } from "@/data/profile";
+import LocalTime from "@/components/LocalTime";
 
 const featured = [
   {
@@ -75,7 +76,7 @@ export default function Home() {
         <div className="hero-topline">
           <p className="hero-name">Shubhang <span>Srinivas Varda</span></p>
           <span className="eyebrow location">
-            <i /> BENGALURU, INDIA
+            <i /> <LocalTime />
           </span>
         </div>
         <h1 tabIndex={-1} aria-label="Software with an AI core.">
@@ -245,7 +246,7 @@ export default function Home() {
           </div>
         </div>
       </section>
-      <section className="experience section-pad">
+      <section className="experience section-pad" id="experience">
         <div className="section-heading compact">
           <span className="eyebrow">04 / IN PRACTICE</span>
           <h2>Experience.</h2>

@@ -115,3 +115,9 @@ Physics tests cover momentum transfer, stage containment, throw limits, cancella
 ## Spatial passage
 
 The original SignalJourney remains between the playground and Contact. It uses the shared canvas for a scroll-through particle tunnel and a selectable orbit formation. PortalWorld lazy-loads with two draw calls (points and line segments) and follows existing quality tiers. The scroll-linked title sequence, progress line, Tunnel/Orbit controls, contact shortcut, and static CSS spiral are preserved. Reduced motion collapses the passage to one viewport and hides its visual mode controls.
+
+## Command palette and live details
+
+Press ⌘K (Ctrl+K elsewhere) on any page, or use the key chip in the header or the floating pill, to open a keyboard-first command palette. It jumps to sections, the work index and each case study; copies the email address; energises the core or replays the intro on the homepage; toggles reduced motion (kept in sync with the footer setting); and opens the paper, GitHub, LinkedIn and this repository. Selections go through the site's existing link handling, so in-page jumps glide and route changes keep their curtain and zoom transitions. Search matches labels, project descriptors, categories and stack keywords; for example, "audio" finds VaniCert. The palette is a native modal dialog with a combobox and listbox, arrow/Home/End navigation, Escape and backdrop dismissal, and a polite live region for results such as "Copied". It never opens over the site menu, and it is hidden on touch-first screens, where the menu covers the same ground.
+
+The hero location now shows the current time in Bengaluru (IST) beside a pulsing live dot once the client runs; server HTML keeps the static "Bengaluru, India" label. Opening DevTools prints a short note for engineers explaining the rendering approach, with the repository and contact links.

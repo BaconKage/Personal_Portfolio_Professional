@@ -62,10 +62,11 @@ export default function SmoothScroll() {
         id === "main" || id === "top" ? null : document.getElementById(id);
       if (id !== "main" && id !== "top" && !target) return;
       event.preventDefault();
-      // Release the menu lock first: restarting Lenis would cancel the glide.
-      if (anchor.closest("dialog")) {
-        unlockScroll("menu");
-        anchor.closest("dialog")?.close();
+      // Release the dialog's lock first: restarting Lenis would cancel the glide.
+      const dialog = anchor.closest("dialog");
+      if (dialog) {
+        unlockScroll(dialog.dataset.scrollLock || "menu");
+        dialog.close();
       }
       scrollToTarget(target ?? 0);
       history.pushState(null, "", url.hash);
