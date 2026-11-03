@@ -7,6 +7,7 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import type { SceneProps } from "./types";
 import { CORE_IGNITION_MS } from "@/lib/motion";
 import { CORE_TIMING, getCoreState, sampleCore } from "@/lib/core-sequence";
+import { voice } from "@/lib/voice";
 
 /**
  * An arc-reactor core with real depth: a thick housing ringed by ten
@@ -250,7 +251,15 @@ export default function HeroWorld({
   const rays = useRef<THREE.Mesh>(null);
   const sparkPoints = useRef<THREE.Points>(null);
   const element = useRef<HTMLElement | null>(null);
-  const motion = useRef({ time: 0, inflow: 0, orbit: 0, spinA: 0, spinB: 0 });
+  const motion = useRef({
+    time: 0,
+    inflow: 0,
+    orbit: 0,
+    spinA: 0,
+    spinB: 0,
+    heard: 0,
+    flux: 0,
+  });
 
   // Reflections are what make metal and acrylic read as real.
   useEffect(() => {
@@ -698,14 +707,20 @@ export default function HeroWorld({
       const noise = Math.sin(Math.floor(t * 26) * 91.7) * 0.5 + 0.5;
       flicker = 1 - window_ * (noise > 0.55 ? 0.65 : 0);
     }
+    // A live voice (see lib/voice) lifts the glow, spins the HUD with spectral
+    // flux and, while a note is held, starts drawing sparks inward.
+    m.heard = THREE.MathUtils.damp(m.heard, voice.on ? voice.level : 0, 14, dt);
+    m.flux = THREE.MathUtils.damp(m.flux, voice.on ? voice.flux : 0, 10, dt);
+    const heard = m.heard * arrival;
     // Standby: a faint breathing glow, even at rest.
     const standby = (0.2 + Math.sin(t * 1.6) * 0.05) * arrival;
-    const power = (standby + frame.energy * (1 - standby)) * flicker;
+    const lifted = Math.max(frame.energy, heard * 0.5 + voice.charge * 0.3);
+    const power = (standby + lifted * (1 - standby)) * flicker;
     const flash = frame.flash;
 
     m.inflow = THREE.MathUtils.damp(
       m.inflow,
-      core.phase === "charging" ? 1 : 0,
+      core.phase === "charging" ? 1 : voice.on ? voice.charge * 0.85 : 0,
       core.phase === "charging" ? 3 : 6,
       dt,
     );
@@ -715,8 +730,8 @@ export default function HeroWorld({
       4,
       dt,
     );
-    m.spinA += dt * (0.05 + frame.spin * 1.1);
-    m.spinB -= dt * (0.035 + frame.spin * 0.7);
+    m.spinA += dt * (0.05 + frame.spin * 1.1 + m.flux * 1.6);
+    m.spinB -= dt * (0.035 + frame.spin * 0.7 + m.flux * 1.1);
 
     // Metal arrives from darkness during the intro.
     const fade = 0.05 + 0.95 * present;
@@ -738,10 +753,15 @@ export default function HeroWorld({
         const lit = THREE.MathUtils.clamp(frame.coils * COILS - i, 0, 1);
         const current =
           frame.energy * (0.18 + 0.18 * Math.sin(t * 5 - i * 0.628));
+        // Each block answers to one frequency band: a circular spectrum.
+        const band = voice.on ? (voice.bands[i] ?? 0) * arrival : 0;
         const level =
-          (0.06 * arrival + lit * 0.8 + current + boot * 0.8) * flicker +
+          (0.06 * arrival + lit * 0.8 + current + boot * 0.8 + band * 1.1) *
+            flicker +
           flash * 0.7;
-        color.copy(CYAN).lerp(ICE, Math.min(1, lit * 0.25 + flash));
+        color
+          .copy(CYAN)
+          .lerp(ICE, Math.min(1, lit * 0.25 + band * 0.45 + flash));
         blocks.setColorAt(i, color.multiplyScalar(level));
       }
       if (blocks.instanceColor) blocks.instanceColor.needsUpdate = true;
@@ -759,7 +779,8 @@ export default function HeroWorld({
         1,
       );
       const pulse =
-        frame.energy * 0.25 * (0.5 + 0.5 * Math.sin(t * 6 - i * 1.1));
+        frame.energy * 0.25 * (0.5 + 0.5 * Math.sin(t * 6 - i * 1.1)) +
+        heard * 0.35 * (1 - i / TUNNEL);
       ring.color
         .copy(CYAN)
         .lerp(ICE, 0.3 + flash * 0.5)
@@ -774,7 +795,8 @@ export default function HeroWorld({
     // …and "SV" powers on last, once the build is complete.
     parts.monogramMaterial.uniforms.uIntensity.value =
       step(ignition, 0.86, 0.12) * (0.35 + power * 1.1) * arrival * flicker +
-      flash * 1.2;
+      flash * 1.2 +
+      heard * 0.5;
     parts.hud.color.copy(CYAN).multiplyScalar((0.06 + power * 0.45) * arrival);
     parts.coreGlow.uniforms.uIntensity.value =
       0.16 + power * 0.75 + flash * 0.7;
@@ -794,7 +816,7 @@ export default function HeroWorld({
     sparks.material.uniforms.uDpr.value = gl.getPixelRatio();
     if (light.current)
       light.current.intensity =
-        (3 + frame.energy * 14 * flicker + flash * 22) * arrival;
+        (3 + frame.energy * 14 * flicker + flash * 22 + heard * 7) * arrival;
     if (hudA.current) hudA.current.rotation.z = m.spinA;
     if (hudB.current) hudB.current.rotation.z = m.spinB;
     if (wave.current) {
@@ -816,7 +838,7 @@ export default function HeroWorld({
     const scale =
       (mobile ? 0.5 : 0.84) *
       (1 + (1 - settle) * 0.22) *
-      (1 + frame.energy * 0.03 + flash * 0.04);
+      (1 + frame.energy * 0.03 + flash * 0.04 + heard * 0.025);
     root.current.scale.setScalar(scale);
     // Three-quarter view: its face turned slightly away so the drum and the
     // blocks show their depth, following the pointer and any drag.

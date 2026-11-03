@@ -10,6 +10,7 @@ import "@/styles/refinements.css";
 import "@/styles/playground.css";
 import "@/styles/motion.css";
 import "@/styles/palette.css";
+import "@/styles/voice.css";
 const sans = Geist({
   subsets: ["latin"],
   variable: "--font-sans",

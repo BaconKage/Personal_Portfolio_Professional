@@ -1,16 +1,35 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { profile, research } from "@/data/profile";
 import { projects } from "@/data/projects";
 import { getCoreState } from "@/lib/core-sequence";
 import { lockScroll, unlockScroll } from "@/lib/scroll";
+import {
+  getVoiceStatus,
+  startVoice,
+  stopVoice,
+  voiceSupported,
+} from "@/lib/voice";
 
-const SOURCE_URL = "https://github.com/BaconKage/Personal_Portfolio_Professional";
+const SOURCE_URL =
+  "https://github.com/BaconKage/Personal_Portfolio_Professional";
 
 type Group = "Navigate" | "Projects" | "Actions" | "Elsewhere";
-type Context = { path: string; motion: "system" | "reduced"; core: string };
+type Context = {
+  path: string;
+  motion: "system" | "reduced";
+  core: string;
+  listening: boolean;
+};
 type Command = {
   id: string;
   group: Group;
@@ -25,6 +44,13 @@ type Command = {
 };
 
 const groups: Group[] = ["Navigate", "Projects", "Actions", "Elsewhere"];
+
+const readContext = (): Context => ({
+  path: location.pathname,
+  motion: readMotion(),
+  core: getCoreState().phase,
+  listening: getVoiceStatus() === "on",
+});
 
 function readMotion(): "system" | "reduced" {
   try {
@@ -46,19 +72,63 @@ function setMotion(value: "system" | "reduced") {
   if (select) select.value = value;
 }
 
-function buildCommands({ path, motion, core }: Context): Command[] {
+function buildCommands({ path, motion, core, listening }: Context): Command[] {
   const home = path === "/";
   const animated =
     motion !== "reduced" &&
     !matchMedia("(prefers-reduced-motion: reduce)").matches;
   const list: Command[] = [
-    { id: "home", group: "Navigate", label: "Home", hint: "/", keywords: "start top hero core", href: home ? "/#main" : "/" },
-    { id: "work", group: "Navigate", label: "All work", hint: "/work", keywords: "projects case studies index", href: "/work" },
-    { id: "about", group: "Navigate", label: "About", keywords: "person bio education university", href: "/#about" },
-    { id: "research", group: "Navigate", label: "Research", keywords: "paper publication springer ai society imperfection", href: "/#research" },
-    { id: "experience", group: "Navigate", label: "Experience", keywords: "jobs roles career first drop catalyst", href: "/#experience" },
-    { id: "playground", group: "Navigate", label: "Playground", keywords: "physics drag throw objects play", href: "/#playground" },
-    { id: "contact", group: "Navigate", label: "Contact", keywords: "hire talk hello reach", href: "/#contact" },
+    {
+      id: "home",
+      group: "Navigate",
+      label: "Home",
+      hint: "/",
+      keywords: "start top hero core",
+      href: home ? "/#main" : "/",
+    },
+    {
+      id: "work",
+      group: "Navigate",
+      label: "All work",
+      hint: "/work",
+      keywords: "projects case studies index",
+      href: "/work",
+    },
+    {
+      id: "about",
+      group: "Navigate",
+      label: "About",
+      keywords: "person bio education university",
+      href: "/#about",
+    },
+    {
+      id: "research",
+      group: "Navigate",
+      label: "Research",
+      keywords: "paper publication springer ai society imperfection",
+      href: "/#research",
+    },
+    {
+      id: "experience",
+      group: "Navigate",
+      label: "Experience",
+      keywords: "jobs roles career first drop catalyst",
+      href: "/#experience",
+    },
+    {
+      id: "playground",
+      group: "Navigate",
+      label: "Playground",
+      keywords: "physics drag throw objects play",
+      href: "/#playground",
+    },
+    {
+      id: "contact",
+      group: "Navigate",
+      label: "Contact",
+      keywords: "hire talk hello reach",
+      href: "/#contact",
+    },
     ...projects.map<Command>((p) => ({
       id: `project-${p.slug}`,
       group: "Projects",
@@ -78,7 +148,13 @@ function buildCommands({ path, motion, core }: Context): Command[] {
         return `Copied ${profile.email}`;
       },
     },
-    { id: "write-email", group: "Actions", label: "Write an email", keywords: "mailto contact hire", external: `mailto:${profile.email}` },
+    {
+      id: "write-email",
+      group: "Actions",
+      label: "Write an email",
+      keywords: "mailto contact hire",
+      external: `mailto:${profile.email}`,
+    },
   ];
   if (home && animated) {
     list.push(
@@ -100,13 +176,43 @@ function buildCommands({ path, motion, core }: Context): Command[] {
           setTimeout(wait, 200);
         },
       },
+      ...(!voiceSupported()
+        ? []
+        : listening
+          ? [
+              {
+                id: "voice",
+                group: "Actions",
+                label: "Stop listening",
+                keywords: "voice microphone mic speak talk off",
+                run: () => {
+                  stopVoice();
+                  return "Microphone off";
+                },
+              } satisfies Command,
+            ]
+          : [
+              {
+                id: "voice",
+                group: "Actions",
+                label: "Talk to the core",
+                hint: "mic",
+                keywords:
+                  "voice microphone mic speak listen sing pitch spectrum",
+                href: "/#main",
+                // Started inside the keypress so the browser allows audio.
+                run: () => void startVoice(),
+              } satisfies Command,
+            ]),
       {
         id: "replay",
         group: "Actions",
         label: "Replay the intro",
         keywords: "ignition preloader animation again",
         run: () => {
-          document.querySelector<HTMLButtonElement>(".ignition-replay")?.click();
+          document
+            .querySelector<HTMLButtonElement>(".ignition-replay")
+            ?.click();
         },
       },
     );
@@ -124,13 +230,47 @@ function buildCommands({ path, motion, core }: Context): Command[] {
         return next === "reduced" ? "Motion reduced" : "Full motion restored";
       },
     },
-    { id: "source", group: "Actions", label: "View this site’s source", hint: "GitHub", keywords: "code repository open source how built", external: SOURCE_URL },
-    { id: "paper", group: "Elsewhere", label: "Read the paper", hint: research.journal, keywords: "research springer publication doi", external: research.url },
-    { id: "github", group: "Elsewhere", label: "GitHub", hint: "@BaconKage", keywords: "code profile", external: profile.github },
-    { id: "linkedin", group: "Elsewhere", label: "LinkedIn", keywords: "profile career network", external: profile.linkedin },
+    {
+      id: "source",
+      group: "Actions",
+      label: "View this site’s source",
+      hint: "GitHub",
+      keywords: "code repository open source how built",
+      external: SOURCE_URL,
+    },
+    {
+      id: "paper",
+      group: "Elsewhere",
+      label: "Read the paper",
+      hint: research.journal,
+      keywords: "research springer publication doi",
+      external: research.url,
+    },
+    {
+      id: "github",
+      group: "Elsewhere",
+      label: "GitHub",
+      hint: "@BaconKage",
+      keywords: "code profile",
+      external: profile.github,
+    },
+    {
+      id: "linkedin",
+      group: "Elsewhere",
+      label: "LinkedIn",
+      keywords: "profile career network",
+      external: profile.linkedin,
+    },
   );
   if (profile.resume)
-    list.push({ id: "resume", group: "Elsewhere", label: "Résumé", hint: "PDF", keywords: "cv resume download", external: profile.resume });
+    list.push({
+      id: "resume",
+      group: "Elsewhere",
+      label: "Résumé",
+      hint: "PDF",
+      keywords: "cv resume download",
+      external: profile.resume,
+    });
   return list;
 }
 
@@ -141,17 +281,27 @@ function rank(commands: Command[], query: string) {
   return commands
     .map((command, order) => {
       const label = command.label.toLowerCase();
-      const haystack = `${label} ${command.hint ?? ""} ${command.keywords ?? ""} ${command.group}`.toLowerCase();
+      const haystack =
+        `${label} ${command.hint ?? ""} ${command.keywords ?? ""} ${command.group}`.toLowerCase();
       if (!words.every((w) => haystack.includes(w))) return null;
       const score = words.reduce(
         (s, w) =>
           s +
-          (label.startsWith(w) ? 4 : label.split(/\s+/).some((t) => t.startsWith(w)) ? 3 : label.includes(w) ? 2 : 1),
+          (label.startsWith(w)
+            ? 4
+            : label.split(/\s+/).some((t) => t.startsWith(w))
+              ? 3
+              : label.includes(w)
+                ? 2
+                : 1),
         0,
       );
       return { command, score, order };
     })
-    .filter((x): x is { command: Command; score: number; order: number } => x !== null)
+    .filter(
+      (x): x is { command: Command; score: number; order: number } =>
+        x !== null,
+    )
     .sort((a, b) => b.score - a.score || a.order - b.order)
     .map((x) => x.command);
 }
@@ -170,7 +320,12 @@ export default function CommandPalette() {
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
   const [status, setStatus] = useState("");
-  const [context, setContext] = useState<Context>({ path, motion: "system", core: "idle" });
+  const [context, setContext] = useState<Context>({
+    path,
+    motion: "system",
+    core: "idle",
+    listening: false,
+  });
   const uid = useId();
 
   const results = useMemo(
@@ -185,7 +340,7 @@ export default function CommandPalette() {
     // Never stack over the site menu or another modal.
     if (document.querySelector("dialog[open]")) return;
     opener.current = document.activeElement;
-    setContext({ path: location.pathname, motion: readMotion(), core: getCoreState().phase });
+    setContext(readContext());
     setQuery("");
     setActive(0);
     setStatus("");
@@ -203,7 +358,11 @@ export default function CommandPalette() {
   // ⌘K / Ctrl+K anywhere toggles the palette; other components can open it by event.
   useEffect(() => {
     const key = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && !event.altKey && event.key.toLowerCase() === "k") {
+      if (
+        (event.metaKey || event.ctrlKey) &&
+        !event.altKey &&
+        event.key.toLowerCase() === "k"
+      ) {
         event.preventDefault();
         if (dialog.current?.open) close();
         else show();
@@ -230,7 +389,9 @@ export default function CommandPalette() {
   function activate(index: number, element?: HTMLElement | null) {
     const command = results[index];
     if (!command) return;
-    const target = element ?? list.current?.querySelector<HTMLElement>(`[data-index="${index}"]`);
+    const target =
+      element ??
+      list.current?.querySelector<HTMLElement>(`[data-index="${index}"]`);
     if (command.href || command.external) {
       // Release the lock before the site's own link handling starts a glide or
       // curtain, so restarting smooth scroll cannot cancel it.
@@ -242,7 +403,7 @@ export default function CommandPalette() {
     const message = command.run?.();
     if (message) {
       setStatus(message);
-      setContext({ path: location.pathname, motion: readMotion(), core: getCoreState().phase });
+      setContext(readContext());
     } else close();
   }
 
@@ -252,7 +413,10 @@ export default function CommandPalette() {
     if (event.key === "ArrowDown" || (event.ctrlKey && event.key === "n")) {
       event.preventDefault();
       setActive((current + 1) % count);
-    } else if (event.key === "ArrowUp" || (event.ctrlKey && event.key === "p")) {
+    } else if (
+      event.key === "ArrowUp" ||
+      (event.ctrlKey && event.key === "p")
+    ) {
       event.preventDefault();
       setActive((current - 1 + count) % count);
     } else if (event.key === "Home") {
@@ -280,7 +444,10 @@ export default function CommandPalette() {
         unlockScroll("palette");
         setOpen(false);
         // Native dialogs restore focus; only step in if it was lost entirely.
-        if (document.activeElement === document.body && opener.current instanceof HTMLElement)
+        if (
+          document.activeElement === document.body &&
+          opener.current instanceof HTMLElement
+        )
           opener.current.focus({ preventScroll: true });
       }}
       onClick={(event) => {
@@ -290,14 +457,18 @@ export default function CommandPalette() {
     >
       <div className="palette-panel">
         <div className="palette-search">
-          <span className="palette-prompt" aria-hidden="true">›</span>
+          <span className="palette-prompt" aria-hidden="true">
+            ›
+          </span>
           <input
             ref={input}
             type="text"
             role="combobox"
             aria-expanded={open}
             aria-controls={`${uid}-list`}
-            aria-activedescendant={results.length ? optionId(current) : undefined}
+            aria-activedescendant={
+              results.length ? optionId(current) : undefined
+            }
             aria-autocomplete="list"
             aria-label="Search pages, projects and actions"
             placeholder="Jump to a project, copy my email, energise the core…"
@@ -313,18 +484,34 @@ export default function CommandPalette() {
           />
           <kbd className="palette-esc">esc</kbd>
         </div>
-        <div className="palette-list" id={`${uid}-list`} role="listbox" ref={list} aria-label="Results">
+        <div
+          className="palette-list"
+          id={`${uid}-list`}
+          role="listbox"
+          ref={list}
+          aria-label="Results"
+        >
           {results.length === 0 && open && (
             <p className="palette-empty">
-              Nothing matches “{query}”. Try <em>work</em>, <em>email</em> or <em>audio</em>.
+              Nothing matches “{query}”. Try <em>work</em>, <em>email</em> or{" "}
+              <em>audio</em>.
             </p>
           )}
           {groups.map((group) => {
             const items = results.filter((c) => c.group === group);
             if (!items.length) return null;
             return (
-              <div role="group" aria-labelledby={`${uid}-${group}`} key={group} className="palette-group">
-                <p className="palette-heading" id={`${uid}-${group}`} aria-hidden="true">
+              <div
+                role="group"
+                aria-labelledby={`${uid}-${group}`}
+                key={group}
+                className="palette-group"
+              >
+                <p
+                  className="palette-heading"
+                  id={`${uid}-${group}`}
+                  aria-hidden="true"
+                >
                   {group}
                 </p>
                 {items.map((command) => {
@@ -342,13 +529,24 @@ export default function CommandPalette() {
                   const body = (
                     <>
                       <span className="palette-label">{command.label}</span>
-                      {command.hint && <span className="palette-hint">{command.hint}</span>}
-                      {command.external && <span className="palette-arrow" aria-hidden="true">↗</span>}
+                      {command.hint && (
+                        <span className="palette-hint">{command.hint}</span>
+                      )}
+                      {command.external && (
+                        <span className="palette-arrow" aria-hidden="true">
+                          ↗
+                        </span>
+                      )}
                     </>
                   );
                   if (command.href)
                     return (
-                      <Link key={command.id} href={command.href} {...props} onClick={(e) => activate(i, e.currentTarget)}>
+                      <Link
+                        key={command.id}
+                        href={command.href}
+                        {...props}
+                        onClick={(e) => activate(i, e.currentTarget)}
+                      >
                         {body}
                       </Link>
                     );
@@ -357,7 +555,9 @@ export default function CommandPalette() {
                       <a
                         key={command.id}
                         href={command.external}
-                        {...(command.external.startsWith("http") ? { target: "_blank", rel: "noreferrer" } : {})}
+                        {...(command.external.startsWith("http")
+                          ? { target: "_blank", rel: "noreferrer" }
+                          : {})}
                         {...props}
                         onClick={(e) => activate(i, e.currentTarget)}
                       >
@@ -365,7 +565,11 @@ export default function CommandPalette() {
                       </a>
                     );
                   return (
-                    <div key={command.id} {...props} onClick={() => activate(i)}>
+                    <div
+                      key={command.id}
+                      {...props}
+                      onClick={() => activate(i)}
+                    >
                       {body}
                     </div>
                   );
