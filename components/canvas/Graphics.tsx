@@ -429,7 +429,15 @@ function Renderer({
         hoverPointer.current.x = event.clientX;
         hoverPointer.current.y = event.clientY;
       }
-      if (paint && event.pointerType === "mouse" && !budget.saturated) {
+      // The trail only distorts worlds: with none on screen (the paper
+      // sections, where the ink layer answers instead) it would copy and
+      // redraw the whole screen for nothing.
+      if (
+        paint &&
+        event.pointerType === "mouse" &&
+        !budget.saturated &&
+        active.current.length
+      ) {
         const b = brush.current;
         b.x = event.clientX;
         b.y = event.clientY;
@@ -591,7 +599,11 @@ function Renderer({
     const frame = ++frameCount.current;
     // Last resort on a device still missing frames at the lowest resolution:
     // the trail is the one optional full-screen pass.
-    const painting = !!paint && !budget.saturated && now < brush.current.until;
+    const painting =
+      !!paint &&
+      !budget.saturated &&
+      now < brush.current.until &&
+      active.current.length > 0;
     if (painting) {
       const b = brush.current;
       paint.resize(state.size.width, state.size.height);
@@ -776,6 +788,11 @@ function Renderer({
       }
     if (painting) paint.composite(state.size.width, state.size.height);
     gl.autoClear = true;
+    // Nothing drawn this frame (no world on screen, no trail): hide the
+    // canvas so the compositor skips a full-screen layer until it draws again.
+    const shown = active.current.length > 0 || painting ? "" : "hidden";
+    if (gl.domElement.style.visibility !== shown)
+      gl.domElement.style.visibility = shown;
     if (capture.current) {
       const copy = capture.current;
       capture.current = null;

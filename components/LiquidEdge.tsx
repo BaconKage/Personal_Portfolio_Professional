@@ -33,6 +33,10 @@ type Edge = {
   depth: number;
   height: number;
   visible: boolean;
+  /** Boundary position in the document, so frames never read layout. */
+  docTop: number;
+  /** Settled: drawn once and left alone until the page scrolls again. */
+  resting: boolean;
   level: number;
   levelVelocity: number;
   stretch: number;
@@ -91,11 +95,12 @@ function tick(now: number) {
   const speed = Math.abs(velocity);
   let running = false;
   for (const edge of edges) {
-    if (!edge.visible || !edge.width) continue;
+    if (!edge.visible || !edge.width || edge.resting) continue;
     running = true;
     edge.time += dt;
-    // Pour while the boundary crosses the middle of the screen.
-    const p = edge.svg.getBoundingClientRect().top / innerHeight;
+    // Pour while the boundary crosses the middle of the screen. The cached
+    // document position avoids forcing a layout read every frame.
+    const p = (edge.docTop - scrollY) / innerHeight;
     const target =
       0.12 +
       0.88 * Math.exp(-(((p - 0.5) / 0.3) ** 2)) +
@@ -111,6 +116,18 @@ function tick(now: number) {
     edge.agitation +=
       (Math.min(speed / 2200, 1) - edge.agitation) * (1 - Math.exp(-dt * 4));
     const shape = draw(edge);
+    // Once the scroll has stopped and every spring has come to rest, stop
+    // redrawing: a still page costs nothing until it scrolls again.
+    if (
+      speed < 4 &&
+      Math.abs(edge.levelVelocity) < 0.003 &&
+      Math.abs(target - edge.level) < 0.003 &&
+      Math.abs(edge.stretchVelocity) < 0.003 &&
+      Math.abs(stretchTarget - edge.stretch) < 0.003 &&
+      edge.agitation < 0.005 &&
+      !edge.dropState.some((d) => d.active)
+    )
+      edge.resting = true;
 
     // Droplets: as a long drip draws back, a drop may break off its tip.
     if (edge.drops.length) {
@@ -163,6 +180,7 @@ function tick(now: number) {
   else last = 0;
 }
 function wake() {
+  for (const edge of edges) edge.resting = false;
   if (!frame && !still()) {
     lastScroll = scrollY;
     frame = requestAnimationFrame(tick);
@@ -220,6 +238,8 @@ export default function LiquidEdge({
       depth: 0,
       height: 0,
       visible: false,
+      docTop: 0,
+      resting: false,
       level: STILL.level,
       levelVelocity: 0,
       stretch: 1,
@@ -236,7 +256,16 @@ export default function LiquidEdge({
         active: false,
       })),
     };
+    // Moving without a scroll (content above grew) changes the pour target,
+    // so a resting edge wakes to follow it.
+    const locate = () => {
+      const top = el.getBoundingClientRect().top + scrollY;
+      if (Math.abs(top - edge.docTop) < 0.5) return;
+      edge.docTop = top;
+      wake();
+    };
     const measure = () => {
+      locate();
       const width = Math.round(host.getBoundingClientRect().width);
       const space = room(lower);
       edge.width = width;
@@ -250,15 +279,19 @@ export default function LiquidEdge({
       el.setAttribute("preserveAspectRatio", "none");
       el.style.height = `${edge.height}px`;
       draw(edge, still() ? STILL : undefined);
+      wake();
     };
     measure();
     edges.add(edge);
+    // One shared, passive listener wakes resting edges when the page moves.
+    if (edges.size === 1) addEventListener("scroll", wake, { passive: true });
     const resize = new ResizeObserver(measure);
     resize.observe(host);
     if (lower) resize.observe(lower);
     const visible = new IntersectionObserver(
       ([entry]) => {
         edge.visible = entry.isIntersecting;
+        locate();
         if (edge.visible) wake();
       },
       { rootMargin: "120px 0px" },
@@ -272,11 +305,16 @@ export default function LiquidEdge({
       } else wake();
     };
     window.addEventListener("motion-change", motion);
+    // Content above can grow (an Ask answer, fonts, images): re-locate.
+    const page = new ResizeObserver(locate);
+    page.observe(document.body);
     return () => {
       edges.delete(edge);
+      if (!edges.size) removeEventListener("scroll", wake);
       resize.disconnect();
       visible.disconnect();
       window.removeEventListener("motion-change", motion);
+      page.disconnect();
     };
   }, [seed, max]);
 

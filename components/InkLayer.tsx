@@ -122,6 +122,9 @@ export default function InkLayer() {
       renderer.dispose();
       return;
     }
+    // Hidden while empty: a full-screen multiply layer is blended into every
+    // composited frame even when it holds nothing.
+    canvas.style.visibility = "hidden";
     document.body.appendChild(canvas);
     // Soft ink: half a pixel per CSS pixel is plenty, and the browser's
     // upscale adds a natural bleed. A quarter of the pixels to shade.
@@ -196,6 +199,7 @@ export default function InkLayer() {
       probed = 0;
 
     const stop = () => {
+      canvas.style.visibility = "hidden";
       until = 0;
       cancelAnimationFrame(raf);
       raf = 0;
@@ -244,7 +248,10 @@ export default function InkLayer() {
       }
       if (!brush.light) return;
       until = now + LINGER_MS;
-      if (!raf) raf = requestAnimationFrame(frame);
+      if (!raf) {
+        canvas.style.visibility = "visible";
+        raf = requestAnimationFrame(frame);
+      }
     };
     // Scrolling moves the page under a resting pointer: re-probe the surface.
     const scroll = () => {
