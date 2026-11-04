@@ -13,8 +13,17 @@ import Preloader from "@/components/Preloader";
 import NextPage from "@/components/NextPage";
 import SocialLinks from "@/components/SocialLinks";
 import Artwork from "@/components/Artwork";
-import { profile, research } from "@/data/profile";
+import {
+  about,
+  education,
+  experience,
+  profile,
+  recognition,
+  research,
+} from "@/data/profile";
 import LocalTime from "@/components/LocalTime";
+import AskPanel from "@/components/AskPanel";
+import { askEnabled } from "@/lib/ask-config";
 
 const featured = [
   {
@@ -74,7 +83,9 @@ export default function Home() {
       <Preloader />
       <section className="hero">
         <div className="hero-topline">
-          <p className="hero-name">Shubhang <span>Srinivas Varda</span></p>
+          <p className="hero-name">
+            Shubhang <span>Srinivas Varda</span>
+          </p>
           <span className="eyebrow location">
             <i /> <LocalTime />
           </span>
@@ -152,7 +163,12 @@ export default function Home() {
             <div className="project-art">
               <Artwork scene={p.slug} />
             </div>
-            <Link href={`/work/${p.slug}`} className="project-hit-area" aria-hidden="true" tabIndex={-1} />
+            <Link
+              href={`/work/${p.slug}`}
+              className="project-hit-area"
+              aria-hidden="true"
+              tabIndex={-1}
+            />
             <div className="project-heading">
               <p className="eyebrow">{p.category}</p>
               <h3>
@@ -179,7 +195,10 @@ export default function Home() {
         </Link>
       </section>
       <section className="about section-pad" id="about">
-        <div className="discipline-band" aria-hidden="true"><div>ENGINEERING · INTELLIGENCE · INTERACTION ·</div><div>IDEAS INTO SYSTEMS · SYSTEMS INTO IMPACT ·</div></div>
+        <div className="discipline-band" aria-hidden="true">
+          <div>ENGINEERING · INTELLIGENCE · INTERACTION ·</div>
+          <div>IDEAS INTO SYSTEMS · SYSTEMS INTO IMPACT ·</div>
+        </div>
         <span className="eyebrow">02 / THE PERSON BEHIND THE SYSTEMS</span>
         <div className="about-main">
           <h2>
@@ -189,27 +208,19 @@ export default function Home() {
           </h2>
           <div className="about-copy">
             <p>
-              <ReadingText text="I’m Shubhang. I work where applied AI meets the everyday reality of building software: the data, the interface, and the things that can go wrong between them." />
+              <ReadingText text={about.intro} />
             </p>
-            <p>
-              That takes me from gym operations to clinical conversations, voice
-              analysis, and language learning. Different domains. A shared
-              interest in making complex systems useful.
-            </p>
+            <p>{about.body}</p>
             <p className="small-copy">
-              B.Tech CSE · Data Science & Engineering
+              {education.degree}
               <br />
-              RV University, Bengaluru · Expected 2027
+              {education.school} · {education.status}
             </p>
           </div>
         </div>
         <div className="personal-line">
           <span className="eyebrow">AWAY FROM THE EDITOR</span>
-          <p>
-            Founder of RV University’s Model UN Society. A room full of
-            different perspectives is a good place to learn how to defend a
-            decision.
-          </p>
+          <p>{about.personal}</p>
         </div>
       </section>
       <section className="research section-pad" id="research">
@@ -230,11 +241,7 @@ export default function Home() {
               is part of the system?
             </h2>
             <p className="paper-title">{research.title}</p>
-            <p>
-              Our paper examines AI’s limitations through complexity, ethics,
-              and governance. It informs how I think about building systems that
-              remain useful without pretending to be infallible.
-            </p>
+            <p>{research.summary}</p>
             <a
               className="text-link"
               href={research.url}
@@ -251,48 +258,38 @@ export default function Home() {
           <span className="eyebrow">04 / IN PRACTICE</span>
           <h2>Experience.</h2>
         </div>
-        <div className="experience-row">
-          <span className="eyebrow">JUN 2026 — PRESENT</span>
-          <div>
-            <h3>First Drop Theatre</h3>
-            <span>Technology Consultant</span>
+        {experience.map((job) => (
+          <div className="experience-row" key={job.organisation}>
+            <span className="eyebrow">{job.dates}</span>
+            <div>
+              <h3>{job.organisation}</h3>
+              <span>{job.role}</span>
+            </div>
+            <p>{job.summary}</p>
           </div>
-          <p>
-            Scenario generation, conversational simulation, voice interaction,
-            and feedback reports for clinical communication training.
-          </p>
-        </div>
-        <div className="experience-row">
-          <span className="eyebrow">MAR 2025 — PRESENT</span>
-          <div>
-            <h3>Catalyst To BeActive</h3>
-            <span>Full-Stack Developer</span>
-          </div>
-          <p>
-            Gym software, member and trainer workspaces, computer vision for
-            workout validation, and AI-assisted diet planning.
-          </p>
-        </div>
+        ))}
         <div className="recognition">
           <span className="eyebrow">ALSO ALONG THE WAY</span>
-          <p>
-            INNOVATEX ’26 · 2nd place
-            <br />
-            <span>RV University × Dell Technologies</span>
-          </p>
-          <p>
-            NPTEL · Affective Computing
-            <br />
-            <span>Elite certificate · 91%</span>
-          </p>
-          <p>
-            AWS Academy
-            <br />
-            <span>Data Engineering</span>
-          </p>
+          {recognition.map((item) => (
+            <p key={item.title}>
+              {item.title}
+              <br />
+              <span>{item.detail}</span>
+            </p>
+          ))}
         </div>
       </section>
-      <ProjectPlayground projects={projects.map(({ slug, title, category, summary, number }) => ({ slug, title, category, summary, number }))} />
+      <ProjectPlayground
+        projects={projects.map(
+          ({ slug, title, category, summary, number }) => ({
+            slug,
+            title,
+            category,
+            summary,
+            number,
+          }),
+        )}
+      />
       <SignalJourney />
       <section className="contact section-pad" id="contact">
         <span className="eyebrow">
@@ -304,13 +301,23 @@ export default function Home() {
           something
           <br />
           <a href={`mailto:${profile.email}`}>
-            <KineticText text="worth using." /><span className="contact-arrow">↗</span>
+            <KineticText text="worth using." />
+            <span className="contact-arrow">↗</span>
           </a>
         </h2>
         <div className="contact-bottom">
           <a href={`mailto:${profile.email}`}>{profile.email}</a>
           <SocialLinks />
         </div>
+        {askEnabled() && (
+          <div className="contact-ask">
+            <div className="contact-ask-copy">
+              <p className="eyebrow">NOT READY TO WRITE? ASK THE CORE.</p>
+              <p>Questions about the work, answered from this site.</p>
+            </div>
+            <AskPanel variant="inline" />
+          </div>
+        )}
       </section>
       <footer className="footer">
         <span>© {new Date().getFullYear()} SHUBHANG SRINIVAS VARDA</span>
@@ -319,7 +326,11 @@ export default function Home() {
           <RollingText text="BACK TO TOP" /> ↑
         </a>
       </footer>
-      <NextPage href="/work" eyebrow="THERE’S MORE TO THE STORY" title="All work" />
+      <NextPage
+        href="/work"
+        eyebrow="THERE’S MORE TO THE STORY"
+        title="All work"
+      />
     </main>
   );
 }

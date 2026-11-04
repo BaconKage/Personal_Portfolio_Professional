@@ -24,11 +24,20 @@ function localTime() {
   }).format(new Date());
 }
 
-const isMac = () => /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+const isMac = () =>
+  /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
 const noop = () => () => {};
 
-export default function Navigation() {
-  const mod = useSyncExternalStore(noop, () => (isMac() ? "⌘" : "Ctrl"), () => "⌘");
+export default function Navigation({
+  askEnabled = false,
+}: {
+  askEnabled?: boolean;
+}) {
+  const mod = useSyncExternalStore(
+    noop,
+    () => (isMac() ? "⌘" : "Ctrl"),
+    () => "⌘",
+  );
   const [open, setOpen] = useState(false);
   const [floating, setFloating] = useState(false);
   const [time, setTime] = useState("");
@@ -247,7 +256,7 @@ export default function Navigation() {
           </div>
         </div>
       </dialog>
-      <CommandPalette />
+      <CommandPalette askEnabled={askEnabled} />
     </>
   );
 }

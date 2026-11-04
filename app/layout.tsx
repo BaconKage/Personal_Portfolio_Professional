@@ -4,6 +4,7 @@ import Navigation from "@/components/Navigation";
 import Motion from "@/components/Motion";
 import ConsoleGreeting from "@/components/ConsoleGreeting";
 import { siteUrl, indexable } from "@/lib/site";
+import { askEnabled } from "@/lib/ask-config";
 import { profile, research } from "@/data/profile";
 import "./globals.css";
 import "@/styles/refinements.css";
@@ -11,6 +12,7 @@ import "@/styles/playground.css";
 import "@/styles/motion.css";
 import "@/styles/palette.css";
 import "@/styles/voice.css";
+import "@/styles/ask.css";
 const sans = Geist({
   subsets: ["latin"],
   variable: "--font-sans",
@@ -72,7 +74,7 @@ export default function RootLayout({
         <a className="skip-link" href="#main">
           Skip to content
         </a>
-        <Navigation />
+        <Navigation askEnabled={askEnabled()} />
         {children}
         <Motion />
         <ConsoleGreeting />

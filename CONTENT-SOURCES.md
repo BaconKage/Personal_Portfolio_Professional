@@ -30,3 +30,7 @@ Inspected 8 September 2026, read-only. The original repository is never an imple
 ## Creative references
 
 https://lusion.co/ and https://lusion.co/projects/oryzo_ai were inspected for scale, pacing, image dominance, and editorial clarity. No source code, assets, wording, or scene designs are copied.
+
+## Ask the core
+
+"Ask the core" answers only from `data/profile.ts` and `data/projects.ts` (the same data the pages render), plus the editorial notes in `lib/ask-knowledge.ts`, which restate the decisions above for the model. When a fact changes, update the data file: the page and the core change together. If an editorial decision above changes, update those notes too.

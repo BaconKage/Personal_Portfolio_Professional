@@ -19,11 +19,12 @@ import {
   stopVoice,
   voiceSupported,
 } from "@/lib/voice";
+import AskPanel from "./AskPanel";
 
 const SOURCE_URL =
   "https://github.com/BaconKage/Personal_Portfolio_Professional";
 
-type Group = "Navigate" | "Projects" | "Actions" | "Elsewhere";
+type Group = "Ask" | "Navigate" | "Projects" | "Actions" | "Elsewhere";
 type Context = {
   path: string;
   motion: "system" | "reduced";
@@ -43,7 +44,9 @@ type Command = {
   run?: () => string | void;
 };
 
-const groups: Group[] = ["Navigate", "Projects", "Actions", "Elsewhere"];
+/** Reads as a question rather than a command search. */
+const QUESTION =
+  /\?\s*$|^(who|what|when|where|why|how|is|are|was|does|do|did|can|could|has|have|tell|which|show)\b/i;
 
 const readContext = (): Context => ({
   path: location.pathname,
@@ -274,11 +277,15 @@ function buildCommands({ path, motion, core, listening }: Context): Command[] {
   return list;
 }
 
-/** Every query word must appear; label matches outrank keyword matches. */
+/**
+ * Every query word must appear; label matches outrank keyword matches.
+ * Results stay grouped (the list shows group headings), with groups ordered
+ * by their best match, so arrow keys move through them in the order shown.
+ */
 function rank(commands: Command[], query: string) {
   const words = query.toLowerCase().trim().split(/\s+/).filter(Boolean);
   if (!words.length) return commands;
-  return commands
+  const scored = commands
     .map((command, order) => {
       const label = command.label.toLowerCase();
       const haystack =
@@ -302,7 +309,18 @@ function rank(commands: Command[], query: string) {
       (x): x is { command: Command; score: number; order: number } =>
         x !== null,
     )
-    .sort((a, b) => b.score - a.score || a.order - b.order)
+    .sort((a, b) => b.score - a.score || a.order - b.order);
+  const best = new Map<Group, number>();
+  scored.forEach((x, i) => {
+    if (!best.has(x.command.group)) best.set(x.command.group, i);
+  });
+  return scored
+    .sort(
+      (a, b) =>
+        best.get(a.command.group)! - best.get(b.command.group)! ||
+        b.score - a.score ||
+        a.order - b.order,
+    )
     .map((x) => x.command);
 }
 
@@ -310,7 +328,12 @@ export function openPalette() {
   window.dispatchEvent(new Event("palette-open"));
 }
 
-export default function CommandPalette() {
+export default function CommandPalette({
+  askEnabled = false,
+}: {
+  /** Set by the server when an API key is configured (see lib/ask-config). */
+  askEnabled?: boolean;
+}) {
   const path = usePathname();
   const dialog = useRef<HTMLDialogElement>(null);
   const input = useRef<HTMLInputElement>(null);
@@ -320,6 +343,8 @@ export default function CommandPalette() {
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
   const [status, setStatus] = useState("");
+  /** The question being answered; the palette shows the answer panel. */
+  const [asking, setAsking] = useState<string | null>(null);
   const [context, setContext] = useState<Context>({
     path,
     motion: "system",
@@ -328,10 +353,22 @@ export default function CommandPalette() {
   });
   const uid = useId();
 
-  const results = useMemo(
-    () => (open ? rank(buildCommands(context), query) : []),
-    [open, context, query],
-  );
+  const results = useMemo(() => {
+    if (!open) return [];
+    const ranked = rank(buildCommands(context), query);
+    const text = query.trim();
+    if (!askEnabled || text.length < 3) return ranked;
+    const ask: Command = {
+      id: "ask",
+      group: "Ask",
+      label: "Ask the core",
+      hint: `“${text}”`,
+    };
+    return QUESTION.test(text) || !ranked.length
+      ? [ask, ...ranked]
+      : [...ranked, ask];
+  }, [open, context, query, askEnabled]);
+  const shownGroups = [...new Set(results.map((c) => c.group))];
   const current = Math.min(active, Math.max(0, results.length - 1));
 
   const show = useCallback(() => {
@@ -344,10 +381,16 @@ export default function CommandPalette() {
     setQuery("");
     setActive(0);
     setStatus("");
+    setAsking(null);
     panel.showModal();
     lockScroll("palette");
     setOpen(true);
     input.current?.focus();
+    // If the search field was not rendered yet, focus it once it is.
+    requestAnimationFrame(() => {
+      if (panel.open && !panel.contains(document.activeElement))
+        input.current?.focus();
+    });
   }, []);
 
   const close = useCallback(() => {
@@ -389,6 +432,10 @@ export default function CommandPalette() {
   function activate(index: number, element?: HTMLElement | null) {
     const command = results[index];
     if (!command) return;
+    if (command.id === "ask") {
+      setAsking(query.trim());
+      return;
+    }
     const target =
       element ??
       list.current?.querySelector<HTMLElement>(`[data-index="${index}"]`);
@@ -439,10 +486,14 @@ export default function CommandPalette() {
       className="palette"
       aria-label="Command palette"
       data-lenis-prevent
+      data-lens-off
       data-scroll-lock="palette"
       onClose={() => {
         unlockScroll("palette");
         setOpen(false);
+        // Leaving ask mode unmounts the answer panel, which cancels any
+        // answer still streaming so it stops spending tokens.
+        setAsking(null);
         // Native dialogs restore focus; only step in if it was lost entirely.
         if (
           document.activeElement === document.body &&
@@ -455,138 +506,156 @@ export default function CommandPalette() {
         if (event.target === event.currentTarget) close();
       }}
     >
-      <div className="palette-panel">
-        <div className="palette-search">
-          <span className="palette-prompt" aria-hidden="true">
-            ›
-          </span>
-          <input
-            ref={input}
-            type="text"
-            role="combobox"
-            aria-expanded={open}
-            aria-controls={`${uid}-list`}
-            aria-activedescendant={
-              results.length ? optionId(current) : undefined
-            }
-            aria-autocomplete="list"
-            aria-label="Search pages, projects and actions"
-            placeholder="Jump to a project, copy my email, energise the core…"
-            autoComplete="off"
-            spellCheck={false}
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setActive(0);
-              setStatus("");
+      <div className="palette-panel" data-asking={asking ? "true" : undefined}>
+        {asking ? (
+          <AskPanel
+            key={asking}
+            variant="palette"
+            initial={asking}
+            onBack={() => {
+              setAsking(null);
+              requestAnimationFrame(() => input.current?.focus());
             }}
-            onKeyDown={onKeyDown}
           />
-          <kbd className="palette-esc">esc</kbd>
-        </div>
-        <div
-          className="palette-list"
-          id={`${uid}-list`}
-          role="listbox"
-          ref={list}
-          aria-label="Results"
-        >
-          {results.length === 0 && open && (
-            <p className="palette-empty">
-              Nothing matches “{query}”. Try <em>work</em>, <em>email</em> or{" "}
-              <em>audio</em>.
-            </p>
-          )}
-          {groups.map((group) => {
-            const items = results.filter((c) => c.group === group);
-            if (!items.length) return null;
-            return (
-              <div
-                role="group"
-                aria-labelledby={`${uid}-${group}`}
-                key={group}
-                className="palette-group"
-              >
-                <p
-                  className="palette-heading"
-                  id={`${uid}-${group}`}
-                  aria-hidden="true"
-                >
-                  {group}
+        ) : (
+          <>
+            <div className="palette-search">
+              <span className="palette-prompt" aria-hidden="true">
+                ›
+              </span>
+              <input
+                ref={input}
+                type="text"
+                role="combobox"
+                aria-expanded={open}
+                aria-controls={`${uid}-list`}
+                aria-activedescendant={
+                  results.length ? optionId(current) : undefined
+                }
+                aria-autocomplete="list"
+                aria-label="Search pages, projects and actions"
+                placeholder={
+                  askEnabled
+                    ? "Jump anywhere, or ask the core a question…"
+                    : "Jump to a project, copy my email, energise the core…"
+                }
+                autoComplete="off"
+                spellCheck={false}
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setActive(0);
+                  setStatus("");
+                }}
+                onKeyDown={onKeyDown}
+              />
+              <kbd className="palette-esc">esc</kbd>
+            </div>
+            <div
+              className="palette-list"
+              id={`${uid}-list`}
+              role="listbox"
+              ref={list}
+              aria-label="Results"
+            >
+              {results.length === 0 && open && (
+                <p className="palette-empty">
+                  Nothing matches “{query}”. Try <em>work</em>, <em>email</em>{" "}
+                  or <em>audio</em>.
                 </p>
-                {items.map((command) => {
-                  const i = results.indexOf(command);
-                  const props = {
-                    id: optionId(i),
-                    role: "option",
-                    "aria-selected": i === current,
-                    "data-index": i,
-                    "data-active": i === current ? "true" : undefined,
-                    className: "palette-option",
-                    tabIndex: -1,
-                    onMouseMove: () => i !== current && setActive(i),
-                  } as const;
-                  const body = (
-                    <>
-                      <span className="palette-label">{command.label}</span>
-                      {command.hint && (
-                        <span className="palette-hint">{command.hint}</span>
-                      )}
-                      {command.external && (
-                        <span className="palette-arrow" aria-hidden="true">
-                          ↗
-                        </span>
-                      )}
-                    </>
-                  );
-                  if (command.href)
-                    return (
-                      <Link
-                        key={command.id}
-                        href={command.href}
-                        {...props}
-                        onClick={(e) => activate(i, e.currentTarget)}
-                      >
-                        {body}
-                      </Link>
-                    );
-                  if (command.external)
-                    return (
-                      <a
-                        key={command.id}
-                        href={command.external}
-                        {...(command.external.startsWith("http")
-                          ? { target: "_blank", rel: "noreferrer" }
-                          : {})}
-                        {...props}
-                        onClick={(e) => activate(i, e.currentTarget)}
-                      >
-                        {body}
-                      </a>
-                    );
-                  return (
-                    <div
-                      key={command.id}
-                      {...props}
-                      onClick={() => activate(i)}
+              )}
+              {shownGroups.map((group) => {
+                const items = results.filter((c) => c.group === group);
+                if (!items.length) return null;
+                return (
+                  <div
+                    role="group"
+                    aria-labelledby={`${uid}-${group}`}
+                    key={group}
+                    className="palette-group"
+                  >
+                    <p
+                      className="palette-heading"
+                      id={`${uid}-${group}`}
+                      aria-hidden="true"
                     >
-                      {body}
-                    </div>
-                  );
-                })}
-              </div>
-            );
-          })}
-        </div>
-        <div className="palette-foot">
-          <span aria-hidden="true">
-            <kbd>↑</kbd>
-            <kbd>↓</kbd> move <kbd>↵</kbd> open
-          </span>
-          <span className="palette-status" role="status" aria-live="polite">
-            {status}
-          </span>
-        </div>
+                      {group}
+                    </p>
+                    {items.map((command) => {
+                      const i = results.indexOf(command);
+                      const props = {
+                        id: optionId(i),
+                        role: "option",
+                        "aria-selected": i === current,
+                        "data-index": i,
+                        "data-active": i === current ? "true" : undefined,
+                        className: "palette-option",
+                        tabIndex: -1,
+                        onMouseMove: () => i !== current && setActive(i),
+                      } as const;
+                      const body = (
+                        <>
+                          <span className="palette-label">{command.label}</span>
+                          {command.hint && (
+                            <span className="palette-hint">{command.hint}</span>
+                          )}
+                          {command.external && (
+                            <span className="palette-arrow" aria-hidden="true">
+                              ↗
+                            </span>
+                          )}
+                        </>
+                      );
+                      if (command.href)
+                        return (
+                          <Link
+                            key={command.id}
+                            href={command.href}
+                            {...props}
+                            onClick={(e) => activate(i, e.currentTarget)}
+                          >
+                            {body}
+                          </Link>
+                        );
+                      if (command.external)
+                        return (
+                          <a
+                            key={command.id}
+                            href={command.external}
+                            {...(command.external.startsWith("http")
+                              ? { target: "_blank", rel: "noreferrer" }
+                              : {})}
+                            {...props}
+                            onClick={(e) => activate(i, e.currentTarget)}
+                          >
+                            {body}
+                          </a>
+                        );
+                      return (
+                        <div
+                          key={command.id}
+                          {...props}
+                          onClick={() => activate(i)}
+                        >
+                          {body}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+            <div className="palette-foot">
+              <span aria-hidden="true">
+                <kbd>↑</kbd>
+                <kbd>↓</kbd> move <kbd>↵</kbd> open
+              </span>
+              <span className="palette-status" role="status" aria-live="polite">
+                {status}
+              </span>
+            </div>
+          </>
+        )}
       </div>
     </dialog>
   );

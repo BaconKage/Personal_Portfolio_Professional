@@ -8,12 +8,13 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "node --test tests/content.test.mjs tests/core-sequence.test.mjs tests/playground-physics.test.mjs tests/render-budget.test.mjs tests/voice-analysis.test.mjs"
+    "test": "node --test tests/content.test.mjs tests/core-sequence.test.mjs tests/playground-physics.test.mjs tests/render-budget.test.mjs tests/voice-analysis.test.mjs tests/ask.test.mjs"
   },
   "engines": {
     "node": "22.x"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "1.4.0",
     "@gsap/react": "^2.1.2",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.5.0",
