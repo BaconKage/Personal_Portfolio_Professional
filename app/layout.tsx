@@ -13,6 +13,7 @@ import "@/styles/motion.css";
 import "@/styles/palette.css";
 import "@/styles/voice.css";
 import "@/styles/ask.css";
+import "@/styles/toolkit.css";
 const sans = Geist({
   subsets: ["latin"],
   variable: "--font-sans",

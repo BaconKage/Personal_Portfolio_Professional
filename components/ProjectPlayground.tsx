@@ -180,7 +180,7 @@ export default function ProjectPlayground({
     >
       <header className="playground-header">
         <div>
-          <span className="eyebrow">05 / THE PLAYGROUND</span>
+          <span className="eyebrow">06 / THE PLAYGROUND</span>
           <h2 id="playground-title">
             Go on.
             <br />

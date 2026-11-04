@@ -1,11 +1,8 @@
 import Image from "next/image";
 export type ProjectSceneId =
-  | "mygym"
-  | "vanicert"
-  | "firstdrop-ai"
-  | "bhashabuddy"
-  | "posture-engine";
-export type SceneId = "hero" | "portal" | "playground" | ProjectSceneId;
+  "mygym" | "vanicert" | "firstdrop-ai" | "bhashabuddy" | "posture-engine";
+export type SceneId =
+  "hero" | "portal" | "playground" | "toolkit" | ProjectSceneId;
 /** Original artwork remains visible without JavaScript or WebGL. */
 export default function Artwork({
   scene,
@@ -30,4 +27,3 @@ export default function Artwork({
     />
   );
 }
-

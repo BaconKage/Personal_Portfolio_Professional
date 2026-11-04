@@ -26,6 +26,7 @@ import { projectZoom } from "@/lib/zoom";
 const loaders = {
   portal: () => import("./PortalWorld"),
   playground: () => import("./PlaygroundWorld"),
+  toolkit: () => import("./ToolkitWorld"),
   hero: () => import("./HeroWorld"),
   mygym: () => import("./MyGymWorld"),
   vanicert: () => import("./VoiceWorld"),
@@ -549,7 +550,7 @@ function Renderer({
       const distance =
         s.id === "hero"
           ? 9.2
-          : s.id === "playground"
+          : s.id === "playground" || s.id === "toolkit"
             ? 12
             : Math.max(10, 6.4 / (2 * Math.tan(Math.PI / 10) * aspect));
       // The card being zoomed into pushes its own camera in: a dive into

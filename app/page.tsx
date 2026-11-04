@@ -23,6 +23,7 @@ import {
 } from "@/data/profile";
 import LocalTime from "@/components/LocalTime";
 import AskPanel from "@/components/AskPanel";
+import Toolkit from "@/components/Toolkit";
 import { askEnabled } from "@/lib/ask-config";
 
 const featured = [
@@ -279,6 +280,7 @@ export default function Home() {
           ))}
         </div>
       </section>
+      <Toolkit />
       <ProjectPlayground
         projects={projects.map(
           ({ slug, title, category, summary, number }) => ({

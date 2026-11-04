@@ -119,6 +119,13 @@ function buildCommands({ path, motion, core, listening }: Context): Command[] {
       href: "/#experience",
     },
     {
+      id: "toolkit",
+      group: "Navigate",
+      label: "Toolkit",
+      keywords: "skills stack technologies tools constellation",
+      href: "/#toolkit",
+    },
+    {
       id: "playground",
       group: "Navigate",
       label: "Playground",

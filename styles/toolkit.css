@@ -1,0 +1,297 @@
+/* ─── The toolkit constellation ─── */
+.toolkit {
+  position: relative;
+  padding: 96px var(--gutter) 40px;
+  background: #070c17;
+  color: #edf1f8;
+  scroll-margin-top: 30px;
+}
+.toolkit .eyebrow {
+  font-size: 12px;
+  line-height: 1.7;
+  letter-spacing: 0.08em;
+  color: #a4b3d0;
+}
+.toolkit-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 30px;
+  margin-bottom: 46px;
+}
+.toolkit-header h2 {
+  margin: 25px 0 0;
+  font-size: clamp(64px, 7.5vw, 118px);
+  font-weight: 450;
+  line-height: 0.98;
+  letter-spacing: -0.065em;
+}
+.toolkit-header h2 em {
+  color: #98b4ff;
+  font-style: normal;
+}
+.toolkit-header > p {
+  margin: 0 0 4px;
+  color: #aebcd4;
+  font-size: 16px;
+  line-height: 1.65;
+}
+.toolkit-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.42fr);
+  gap: clamp(30px, 4vw, 64px);
+  align-items: start;
+}
+
+/* Stage: the WebGL constellation draws into this box. */
+.toolkit-stage {
+  position: relative;
+  min-width: 0;
+  min-height: 520px;
+  aspect-ratio: 1.45;
+  overflow: hidden;
+  border: 1px solid #2c3a5a;
+  border-radius: 24px;
+  background: radial-gradient(
+    ellipse at 50% 46%,
+    #15244a 0%,
+    #0c1630 45%,
+    #080e1e 80%
+  );
+  touch-action: pan-y pinch-zoom;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.toolkit-poster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transition: opacity 0.6s ease;
+}
+.toolkit-poster line {
+  stroke: #3a4c78;
+  stroke-width: 1;
+}
+.toolkit-poster text {
+  fill: #c9d6f5;
+  font-family: var(--font-sans), Arial, sans-serif;
+  font-size: 15px;
+}
+.toolkit-stage[data-ready="true"] .toolkit-poster {
+  opacity: 0;
+}
+/* Above the shared WebGL canvas (fixed, z-index 1), like the hero copy. */
+.toolkit-labels {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+.toolkit-stage:not([data-ready="true"]) .toolkit-labels {
+  visibility: hidden;
+}
+/* Placed with `transform` by the renderer; `translate` offsets each label
+   from its star, so the two never overwrite each other. */
+.toolkit-labels span {
+  position: absolute;
+  left: 0;
+  top: 0;
+  white-space: nowrap;
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  color: #c3cfeb;
+  opacity: 0.62;
+  translate: -50% 12px;
+  text-shadow: 0 1px 6px #070c17;
+  transition:
+    opacity 0.35s ease,
+    color 0.35s ease,
+    background-color 0.35s ease;
+}
+.toolkit-labels span[data-kind="project"] {
+  font-family: var(--font-sans), Arial, sans-serif;
+  font-size: 14px;
+  letter-spacing: -0.01em;
+  color: #fff;
+  opacity: 0.92;
+  translate: -50% calc(-100% - 24px);
+  text-shadow:
+    0 1px 10px #070c17,
+    0 0 2px #070c17;
+}
+.toolkit-labels span[data-state="dim"] {
+  opacity: 0.14;
+}
+.toolkit-labels span[data-state="lit"] {
+  opacity: 1;
+  color: #fff;
+}
+.toolkit-labels span[data-state="active"] {
+  opacity: 1;
+  color: #070c17;
+  background: #e6edff;
+  padding: 3px 8px;
+  border-radius: 20px;
+  text-shadow: none;
+}
+.toolkit-hint {
+  position: absolute;
+  z-index: 2;
+  left: 22px;
+  bottom: 18px;
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: #7f8fb2;
+  transition: opacity 0.4s ease;
+}
+.toolkit-stage[data-active="true"] .toolkit-hint,
+.toolkit-stage:not([data-ready="true"]) .toolkit-hint {
+  opacity: 0;
+}
+
+/* The index: the accessible way in, and a second view of the same links. */
+.toolkit-index {
+  display: grid;
+  gap: 26px;
+}
+.toolkit-family .eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.toolkit-family ul,
+.toolkit-projects ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.toolkit-family button {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-height: 36px;
+  padding: 7px 13px;
+  border: 1px solid #2c3a5a;
+  border-radius: 20px;
+  background: #0c1428;
+  color: #dfe7f8;
+  font-size: 14px;
+  line-height: 1.25;
+  text-align: left;
+  transition:
+    background-color 0.25s,
+    border-color 0.25s,
+    opacity 0.25s,
+    color 0.25s;
+}
+.toolkit-family button small {
+  display: none;
+  font-family: var(--font-mono), monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.02em;
+  color: #8e9cbc;
+}
+/* Without the constellation, each chip says where it was used. */
+.toolkit-stage:not([data-ready="true"]) + .toolkit-index button small {
+  display: block;
+}
+.toolkit-family button:hover,
+.toolkit-family button:focus-visible {
+  border-color: #6f8bff;
+}
+.toolkit-family button[data-state="lit"] {
+  border-color: #6f8bff;
+  background: #16204a;
+  color: #fff;
+}
+.toolkit-family button[data-state="active"],
+.toolkit-family button[aria-pressed="true"] {
+  border-color: #e6edff;
+  background: #e6edff;
+  color: #070c17;
+}
+.toolkit-family button[data-state="active"] small,
+.toolkit-family button[aria-pressed="true"] small {
+  display: block;
+  color: #3b4868;
+}
+.toolkit-family button[data-state="dim"] {
+  opacity: 0.4;
+}
+.toolkit-projects a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 7px 14px;
+  border: 1px solid #2c3a5a;
+  border-radius: 20px;
+  font-size: 14px;
+  color: #dfe7f8;
+  transition:
+    border-color 0.25s,
+    background-color 0.25s;
+}
+.toolkit-projects a i {
+  width: 7px;
+  height: 7px;
+  margin: 0;
+}
+.toolkit-projects a span {
+  color: #8e9cbc;
+}
+.toolkit-projects a:hover,
+.toolkit-projects a:focus-visible {
+  border-color: #e6edff;
+  background: #16204a;
+}
+
+@media (max-width: 1100px) {
+  .toolkit-layout {
+    grid-template-columns: 1fr;
+  }
+  .toolkit-stage {
+    min-height: 0;
+  }
+}
+@media (max-width: 767px) {
+  .toolkit {
+    padding-top: 72px;
+  }
+  .toolkit-header {
+    display: block;
+    margin-bottom: 30px;
+  }
+  .toolkit-header h2 {
+    font-size: 15vw;
+  }
+  .toolkit-header > p {
+    margin-top: 18px;
+    font-size: 15px;
+  }
+  .toolkit-stage {
+    aspect-ratio: 0.78;
+    border-radius: 20px;
+  }
+  /* A small screen shows the projects and whatever is lit, not every name. */
+  .toolkit-labels
+    span[data-kind="tool"]:not([data-state="lit"]):not([data-state="active"]) {
+    opacity: 0;
+  }
+  .toolkit-hint {
+    left: 16px;
+    right: 16px;
+    bottom: 14px;
+    font-size: 10px;
+  }
+}
+html[data-motion="reduced"] .toolkit-labels {
+  display: none;
+}
