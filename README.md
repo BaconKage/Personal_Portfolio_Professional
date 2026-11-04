@@ -173,3 +173,40 @@ Both pointer effects were toned down after review: the warp now pushes the image
 Three boundaries between light and dark sections are liquid: the hero into Selected Work (night into paper), Experience into the toolkit (paper into night), and the footer into the closing "All work" screen. The upper section's colour hangs over the top of the next one as a meniscus with drips. As the boundary crosses the middle of the screen, the drips pour out, with columns that flare where they leave the surface and drops gathering at the tips. They settle back on slightly underdamped springs, so the liquid overshoots and wobbles. Scrolling fast stretches them with inertia and roughens the surface, and on desktop an occasional droplet breaks off a receding drip. The Tunnel into Contact boundary keeps its existing rounded scale-in instead.
 
 `lib/liquid.ts` holds the geometry as pure functions: seeded drip layout, the surface waves, drip lengths, and the SVG path and tip bulbs. Each drip uses a flat-topped profile with a soft fillet, so long drips read as columns with rounded ends rather than needles. `components/LiquidEdge.tsx` is a zero-height element placed between two sections. It reads the upper section's background colour and draws into the lower section's top padding. Drip depth is measured live, so the liquid always stops short of the lower section's first text (at least 35 px in the browser checks). One shared animation loop updates only on-screen edges and writes the SVG directly, with no React state. The server renders a still edge, cropped rather than squashed on narrow screens. Reduced motion gets the same still edge. `tests/liquid.test.mjs` checks that drips are evenly spread and stable per seed, never exceed their depth under any pour, stretch or agitation, lengthen when pouring and stretching, and that the path spans the full width.
+
+## Smoothness pass
+
+Every effect above is unchanged. This pass only removes work the page did without showing anything for it. Each part of the homepage was profiled in Chromium: main-thread task time, layouts per second, frame rate, and CPU time of the renderer and GPU processes. The waste was then fixed one item at a time:
+
+- **Animations nobody could see.** The hero's live dot and the round-link scroll cue loop forever in CSS. They kept the browser producing a frame (style, layout and commit) 60 times a second on every part of the page, even with both off screen. Sections more than 100 px outside the viewport now pause their CSS animations, which resume before they scroll into view (`components/Motion.tsx`, `styles/motion.css`).
+- **Hundreds of observers.** The text lens watched each of its ~780 text elements with an IntersectionObserver, so every scrolled frame tested all of them. It now watches their ~15 sections and treats the text in on-screen sections as candidates (`components/TextLens.tsx`).
+- **A layout every frame.** Each liquid edge read its position with `getBoundingClientRect()` every frame, forcing a layout (about 45 a second while idle). The position is now kept in document coordinates and refreshed when something can move it: a resize, content above growing, or the edge entering view. Once scrolling stops and every spring has settled (about 2–3 s at 60 fps), an edge stops redrawing until the page scrolls again. The only visible difference: the slow ripple on a resting meniscus pauses while the page is completely still (`components/LiquidEdge.tsx`).
+- **A warp with nothing to warp.** The cursor warp ran its full-screen passes over the paper sections, where no world is drawn and the ink layer answers instead. It only distorts pixels the 3D canvas has drawn, so it now runs only while a world is on screen (`components/canvas/Graphics.tsx`).
+- **GPU memory for project cards.** Each home card rendered its world into its own multisampled target, kept for every card already seen: roughly 100 MB each at 1440 × 900 on a typical desktop GPU (a 1385 × 900 card at 1.47 device pixels is 2.7 million pixels, at about 40 bytes each for 4× MSAA colour and depth plus the resolved texture), so about 400 MB once all four cards had been seen. A sheet renders into its target and draws it on screen in the same call, so all of them now share one target that only grows. A smaller card uses its corner, with texture coordinates clamped to its own texels (`components/canvas/ProjectSheet.ts`).
+- **An empty blend layer.** The ink canvas blends with `multiply`, which makes the compositor re-blend everything beneath it on every frame that changes, even while the layer holds nothing. It now switches to multiply when a stroke starts and back to normal once the ink has dried and been cleared, so nothing visible changes (`components/InkLayer.tsx`, `styles/motion.css`).
+
+Tried and reverted: hiding the 3D and ink canvases while empty. The blend switch above recovers most of the benefit, and hiding live WebGL canvases made Chromium's software renderer far more likely to stay busy after the 3D sections (see the note below).
+
+### Measured
+
+Local production builds in headless Chromium at 1440 × 900, before (commit b4453d9) and after. Each scene was held for 4 s after a warm-up pass that builds and compiles every 3D scene. "Main thread" is task time per frame drawn; "layouts" counts forced and scheduled layouts per second.
+
+| Scene | Frame rate | Main thread per frame | Layouts per second |
+| --- | --- | --- | --- |
+| Hero, idle | 5 → 6 fps | 11.6 → 4.3 ms | 5 → 0 |
+| Project card, idle | 9 → 11 fps | 12.6 → 6.5 ms | 12 → 3 |
+| About, idle¹ | 60 → 60 fps | 2.6 → 0.6 ms | 0 → 0 |
+| About, drawing ink | 6 → 6 fps | 16.2 → 12.0 ms | 0 → 0 |
+| Experience, idle¹ | 60 → 60 fps | 5.5 → 0.6 ms | 60 → 0 |
+| Toolkit, idle | 14 → 24 fps | 13.0 → 4.8 ms | 14 → 0 |
+| Toolkit, hovering | 10 → 14 fps | 21.9 → 17.4 ms | 14 → 8 |
+| Playground, idle | 13 → 19 fps | 8.9 → 3.9 ms | 0 → 0 |
+| Tunnel, idle | 14 → 22 fps | 6.9 → 1.9 ms | 0 → 0 |
+| Contact, idle | 13 → 20 fps | 9.2 → 2.5 ms | 13 → 3 |
+| Scrolling the whole page | 9 → 11 fps | 16.4 → 16.3 ms | 7 → 7 |
+
+¹ Measured in a fresh browser (see the note below). On these paper sections the page now uses about 33 ms of main-thread time per second while idle, down from 155 ms on About and 327 ms on Experience: roughly 3% of one core instead of 15–33%.
+
+Note on the software renderer: after leaving the 3D project cards, Chromium's SwiftShader sometimes keeps its four worker threads busy for minutes (about 370% CPU). The page issues no WebGL calls during this time, destroying both WebGL contexts does not stop it, and the GPU process's main thread is idle. No single change reproduces it: it appears when the changes are combined, and becomes likelier the less work the page does at that moment. The old build was never seen to do it, while the new one does in about half of runs. Current Chrome no longer falls back to SwiftShader for WebGL (deprecated from Chrome 130, with context creation failing from about Chrome 139). On a machine without a usable GPU, visitors get the posters and this path never runs. It appears here only because the test browser forces SwiftShader on with `--enable-unsafe-swiftshader`.
+
+This machine has no GPU. WebGL runs on SwiftShader (a CPU rasteriser), which saturates in every 3D scene, so absolute frame rates are far below a real device's; the relative change in frame rate and main-thread time is the meaningful part. The hero is limited by the software rasteriser in both builds. Real-GPU, Safari, Firefox and phone behaviour has not been measured here.
