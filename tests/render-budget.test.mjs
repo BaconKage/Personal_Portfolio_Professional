@@ -74,13 +74,66 @@ test("GPU class sets the starting budget before any frame is measured", () => {
   assert.ok(standard.maxDpr > low.maxDpr && standard.antialias && standard.sheetSamples === 4);
   assert.ok(software.geometryQuality > 0, "Effects must stay enabled on every tier");
 });
+/** Feeds frames until `until(budget)` or the time runs out; returns elapsed ms. */
+const runUntil = (budget, frame, until, limitMs = 600_000) => {
+  let t = 0;
+  while (t < limitMs && !until(budget)) {
+    const ms = typeof frame === "function" ? frame(budget) : frame;
+    budget.sample(ms);
+    t += ms;
+  }
+  return t;
+};
+/** Share of time the optional pass is shed over `seconds` of frames. */
+const shedShare = (budget, frame, seconds) => {
+  let t = 0, off = 0;
+  while (t < seconds * 1000) {
+    const ms = frame(budget, t);
+    budget.sample(ms);
+    t += ms;
+    if (budget.saturated) off += ms;
+  }
+  return off / t;
+};
+
 test("Only sustained misses at the lowest resolution shed optional passes", () => {
   const budget = createRenderBudget(1.25, 0.75);
   run(budget, 16.67, 3000);
   run(budget, 45, 40);
   run(budget, 16.67, 1000);
   assert.equal(budget.saturated, false, "A burst of slow frames never sheds passes");
-  run(budget, 40, 3000);
-  assert.equal(budget.dpr, 0.75);
+  runUntil(budget, 40, (b) => b.saturated);
   assert.equal(budget.saturated, true);
+  assert.equal(budget.dpr, 0.75, "Resolution goes first; passes are shed only at the floor");
+});
+test("A shed pass comes back when dropping it does not help", () => {
+  // Frames stay slow with the trail off (a 30fps cap, or load elsewhere).
+  const budget = createRenderBudget(1.25, 0.75);
+  runUntil(budget, 33.3, (b) => b.saturated);
+  const back = runUntil(budget, 33.3, (b) => !b.saturated);
+  assert.ok(back <= 2_000, `restored after ${back}ms`);
+  const share = shedShare(budget, () => 33.3, 600);
+  assert.ok(share < 0.02, `a frame-rate cap hid the trail ${(share * 100).toFixed(1)}% of the time`);
+});
+test("A pass that really costs too much stays off, retried with growing waits", () => {
+  // The trail is the cost: 40ms frames with it, 16.7ms without.
+  const budget = createRenderBudget(1.25, 0.75);
+  const frame = (b) => (b.saturated ? 16.67 : 40);
+  runUntil(budget, frame, (b) => b.saturated);
+  const waits = [];
+  for (let i = 0; i < 4; i++) {
+    waits.push(runUntil(budget, frame, (b) => !b.saturated));
+    runUntil(budget, frame, (b) => b.saturated);
+  }
+  for (let i = 1; i < waits.length; i++)
+    assert.ok(waits[i] > waits[i - 1] * 1.5, `retry waits should grow: ${waits.map(Math.round)}`);
+  assert.ok(waits[0] >= 8_000, `first retry after ${waits[0]}ms`);
+  assert.ok(shedShare(budget, frame, 600) > 0.9, "while it costs too much, it stays mostly off");
+});
+test("Once load passes, the shed pass returns", () => {
+  const budget = createRenderBudget(1.25, 0.75);
+  runUntil(budget, 40, (b) => b.saturated);
+  const back = runUntil(budget, 16.67, (b) => !b.saturated, 60_000);
+  assert.ok(back < 15_000, `back after ${back}ms of smooth frames`);
+  assert.equal(budget.dpr, 0.75, "Resolution itself still never bounces back up");
 });

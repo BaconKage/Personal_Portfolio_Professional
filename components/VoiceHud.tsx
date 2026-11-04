@@ -69,6 +69,9 @@ export default function VoiceHud({ active }: { active: boolean }) {
     <div
       ref={root}
       className="voice-hud"
+      // Its readout rewrites itself every frame: keep the text lens from
+      // treating that as new page text to rescan.
+      data-lens-off
       data-active={active ? "true" : undefined}
       aria-hidden="true"
     >

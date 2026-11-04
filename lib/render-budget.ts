@@ -56,25 +56,49 @@ export function getRenderProfile(device: DeviceBudget) {
   };
 }
 
+/** First wait before retrying a shed pass whose removal helped; it doubles. */
+export const SHED_RETRY_MS = 8_000;
+export const SHED_RETRY_MAX_MS = 120_000;
+/** After a shed that did not help, how long before suspecting the pass again; it doubles. */
+export const SHED_EXCUSE_MS = 60_000;
+export const SHED_EXCUSE_MAX_MS = 600_000;
+
 /**
  * Resolution only ever steps down, in a few large steps. Every change
  * reallocates the drawing buffer (a visible hitch), so oscillating between
  * levels costs more smoothness than it recovers in sharpness.
+ *
+ * At the lowest resolution the optional full-screen pass (the cursor trail)
+ * is shed as an experiment, never for good. If frames recover without it, it
+ * was the cost: it stays off and is retried later, waiting longer each time.
+ * If they do not recover, something else holds frames back (a browser
+ * frame-rate cap such as battery saving, or other load), so the pass comes
+ * straight back and is not suspected again for a while.
  */
 export function createRenderBudget(maxDpr: number, minDpr: number) {
   let dpr = maxDpr,
     elapsed = 0,
     frames = 0,
     late = 0,
-    saturated = false;
+    saturated = false,
+    probing = false,
+    retryIn = 0,
+    retryWait = SHED_RETRY_MS,
+    excused = 0,
+    excuseWait = SHED_EXCUSE_MS;
   let cooldown = 1200;
   const step = () =>
     Math.max(0.125, Math.ceil(((maxDpr - minDpr) / 3) * 8) / 8);
+  const restore = () => {
+    saturated = false;
+    excused = excuseWait;
+    excuseWait = Math.min(excuseWait * 2, SHED_EXCUSE_MAX_MS);
+  };
   return {
     get dpr() {
       return dpr;
     },
-    /** Still missing frames at the lowest resolution: shed optional passes. */
+    /** Optional passes are shed right now (see above): skip them. */
     get saturated() {
       return saturated;
     },
@@ -95,6 +119,7 @@ export function createRenderBudget(maxDpr: number, minDpr: number) {
         this.reset();
         return null;
       }
+      if (excused > 0) excused -= ms;
       if (cooldown > 0) {
         cooldown -= ms;
         return null;
@@ -104,11 +129,30 @@ export function createRenderBudget(maxDpr: number, minDpr: number) {
       // A frame over 20ms has missed a 60Hz vsync: a visible stutter.
       if (ms > 20) late++;
       if (elapsed < 1000) return null;
-      const average = elapsed / frames,
+      const span = elapsed,
+        average = elapsed / frames,
         missed = late / frames;
       // Sustained, not transient: below ~50fps with a fifth of frames late.
       const overloaded = average > 20 && missed > 0.2;
       elapsed = frames = late = 0;
+      if (saturated) {
+        if (probing) {
+          // The first full window without the pass is the verdict.
+          probing = false;
+          if (overloaded) restore();
+          else retryIn = retryWait;
+        } else if (overloaded) {
+          // Slow again with the pass already off: it is not the cause now.
+          restore();
+        } else if ((retryIn -= span) <= 0) {
+          // Healthy for a while: try the pass again; if it still costs too
+          // much it is shed again, and the next retry waits longer.
+          saturated = false;
+          retryWait = Math.min(retryWait * 2, SHED_RETRY_MAX_MS);
+          cooldown = 500;
+        }
+        return null;
+      }
       if (!overloaded) return null;
       if (dpr > minDpr) {
         dpr = Math.max(minDpr, Math.round((dpr - step()) * 1000) / 1000);
@@ -116,7 +160,11 @@ export function createRenderBudget(maxDpr: number, minDpr: number) {
         cooldown = 3000;
         return dpr;
       }
+      if (excused > 0) return null;
       saturated = true;
+      probing = true;
+      // Skip the frames in flight when the pass was dropped.
+      cooldown = 500;
       return null;
     },
   };
