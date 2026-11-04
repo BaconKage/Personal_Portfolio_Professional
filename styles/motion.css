@@ -739,3 +739,11 @@ html[data-motion="reduced"] .ink-layer {
   width: 100%;
   overflow: visible;
 }
+
+/* Off-screen sections pause their CSS animations (see Motion). */
+[data-offscreen],
+[data-offscreen] *,
+[data-offscreen] *::before,
+[data-offscreen] *::after {
+  animation-play-state: paused !important;
+}

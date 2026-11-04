@@ -86,6 +86,10 @@ void main() {
 
 const fragmentShader = /* glsl */ `
 uniform sampler2D u_texture;
+// The shared target can be larger than this card: xy scales the card's UVs
+// into its corner, zw is the last texel centre (no stale texels at the edge).
+uniform vec4 u_uvRect;
+uniform vec2 u_uvMin;
 uniform vec3 u_bgInner;
 uniform vec3 u_bgMid;
 uniform vec3 u_bgOuter;
@@ -118,7 +122,8 @@ void main() {
   float inner = sdRoundedBox((v_uv - 0.5) * v_domWH, v_domWH * 0.5 - border, max(u_radius - border * 0.3, 4.0));
   float inside = clamp(0.5 - inner / max(fwidth(inner), 1e-4), 0.0, 1.0);
   // The world was rendered linear onto transparent black; finish it here.
-  vec4 world = texture2D(u_texture, worldUv) * inside;
+  vec2 sampleUv = clamp(worldUv * u_uvRect.xy, u_uvMin, u_uvRect.zw);
+  vec4 world = texture2D(u_texture, sampleUv) * inside;
   vec3 light = world.rgb;
   #ifdef TONE_MAPPING
   light = toneMapping(light);
@@ -133,22 +138,58 @@ const geometry = new THREE.PlaneGeometry(1, 1, 32, 32);
 
 export type ProjectSheet = ReturnType<typeof createProjectSheet>;
 
+/**
+ * Every sheet renders its world into a target and draws it on screen in the
+ * same call, so all of them can share one target. One MSAA target per card
+ * held roughly 80 MB of GPU memory each at desktop size, for every card
+ * already seen. The shared one only grows; a smaller card uses its corner.
+ */
+const sharedTargets = new WeakMap<
+  THREE.WebGLRenderer,
+  Map<number, { target: THREE.WebGLRenderTarget; users: number }>
+>();
+function acquireTarget(renderer: THREE.WebGLRenderer, samples: number) {
+  let bySamples = sharedTargets.get(renderer);
+  if (!bySamples) sharedTargets.set(renderer, (bySamples = new Map()));
+  let entry = bySamples.get(samples);
+  if (!entry) {
+    entry = {
+      target: new THREE.WebGLRenderTarget(1, 1, {
+        samples,
+        depthBuffer: true,
+        stencilBuffer: false,
+        generateMipmaps: false,
+        minFilter: THREE.LinearFilter,
+        magFilter: THREE.LinearFilter,
+      }),
+      users: 0,
+    };
+    bySamples.set(samples, entry);
+  }
+  entry.users++;
+  const owned = entry;
+  return {
+    target: owned.target,
+    release() {
+      if (--owned.users > 0) return;
+      owned.target.dispose();
+      bySamples!.delete(samples);
+    },
+  };
+}
+
 export function createProjectSheet(
   renderer: THREE.WebGLRenderer,
   id: SceneId,
   samples = 4,
 ) {
   const bg = backgrounds[id] ?? flat("#101621");
-  const target = new THREE.WebGLRenderTarget(1, 1, {
-    samples,
-    depthBuffer: true,
-    stencilBuffer: false,
-    generateMipmaps: false,
-    minFilter: THREE.LinearFilter,
-    magFilter: THREE.LinearFilter,
-  });
+  const shared = acquireTarget(renderer, samples);
+  const target = shared.target;
   const uniforms = {
     u_texture: { value: target.texture },
+    u_uvRect: { value: new THREE.Vector4(1, 1, 1, 1) },
+    u_uvMin: { value: new THREE.Vector2(0, 0) },
     u_domXYFrom: { value: new THREE.Vector2() },
     u_domWHFrom: { value: new THREE.Vector2(1, 1) },
     u_domXY: { value: new THREE.Vector2() },
@@ -215,7 +256,16 @@ export function createProjectSheet(
       const dpr = renderer.getPixelRatio();
       const w = Math.max(1, Math.ceil(layout.width * dpr)),
         h = Math.max(1, Math.ceil(layout.height * dpr));
-      if (target.width !== w || target.height !== h) target.setSize(w, h);
+      // Grow only, so cards of different sizes never reallocate each frame.
+      if (target.width < w || target.height < h)
+        target.setSize(Math.max(target.width, w), Math.max(target.height, h));
+      const W = target.width,
+        H = target.height;
+      target.viewport.set(0, 0, w, h);
+      target.scissor.set(0, 0, w, h);
+      target.scissorTest = W !== w || H !== h;
+      uniforms.u_uvRect.value.set(w / W, h / H, (w - 0.5) / W, (h - 0.5) / H);
+      uniforms.u_uvMin.value.set(0.5 / W, 0.5 / H);
       const alpha = renderer.getClearAlpha();
       renderer.getClearColor(clearColor);
       renderer.setRenderTarget(target);
@@ -238,7 +288,7 @@ export function createProjectSheet(
       renderer.render(scene, camera);
     },
     dispose() {
-      target.dispose();
+      shared.release();
       material.dispose();
     },
   };
