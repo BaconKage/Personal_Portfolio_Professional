@@ -715,6 +715,10 @@ html:not([data-motion="reduced"])
   height: 100%;
   z-index: 2;
   pointer-events: none;
+}
+/* Multiply only while ink is drawn: a blended layer makes the compositor
+   re-blend everything beneath it each frame, and empty it shows nothing. */
+.ink-layer[data-wet] {
   mix-blend-mode: multiply;
 }
 html[data-motion="reduced"] .ink-layer {

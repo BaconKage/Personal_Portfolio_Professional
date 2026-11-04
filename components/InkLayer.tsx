@@ -122,7 +122,8 @@ export default function InkLayer() {
       renderer.dispose();
       return;
     }
-    // Left visible while empty, like the 3D canvas (see Graphics).
+    // Left visible while empty, like the 3D canvas (see Graphics); only its
+    // multiply blend, which costs a full-screen pass a frame, is dropped.
     document.body.appendChild(canvas);
     // Soft ink: half a pixel per CSS pixel is plenty, and the browser's
     // upscale adds a natural bleed. A quarter of the pixels to shade.
@@ -204,6 +205,7 @@ export default function InkLayer() {
       brush.live = false;
       renderer.setRenderTarget(null);
       renderer.clear();
+      delete canvas.dataset.wet;
     };
     const frame = (now: number) => {
       raf = 0;
@@ -245,7 +247,10 @@ export default function InkLayer() {
       }
       if (!brush.light) return;
       until = now + LINGER_MS;
-      if (!raf) raf = requestAnimationFrame(frame);
+      if (!raf) {
+        canvas.dataset.wet = "";
+        raf = requestAnimationFrame(frame);
+      }
     };
     // Scrolling moves the page under a resting pointer: re-probe the surface.
     const scroll = () => {
