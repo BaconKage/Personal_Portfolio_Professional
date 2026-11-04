@@ -720,3 +720,22 @@ html:not([data-motion="reduced"])
 html[data-motion="reduced"] .ink-layer {
   display: none;
 }
+
+/* ─── Liquid edges between light and dark sections (LiquidEdge) ─── */
+/* Sits on the boundary and hangs the upper colour into the lower section's
+   top padding; it takes no space in the layout. */
+.liquid-edge {
+  position: relative;
+  height: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+.liquid-edge svg {
+  position: absolute;
+  left: 0;
+  /* Overlap the seam by a pixel so no hairline shows between the colours. */
+  top: -1px;
+  display: block;
+  width: 100%;
+  overflow: visible;
+}

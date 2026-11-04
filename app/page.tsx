@@ -24,6 +24,7 @@ import {
 import LocalTime from "@/components/LocalTime";
 import AskPanel from "@/components/AskPanel";
 import Toolkit from "@/components/Toolkit";
+import LiquidEdge from "@/components/LiquidEdge";
 import { askEnabled } from "@/lib/ask-config";
 
 const featured = [
@@ -132,6 +133,7 @@ export default function Home() {
           <CoreIgnition />
         </div>
       </section>
+      <LiquidEdge seed={1} max={110} color="#060b18" />
       <section
         className="selected"
         id="selected-work"
@@ -280,6 +282,7 @@ export default function Home() {
           ))}
         </div>
       </section>
+      <LiquidEdge seed={2} max={84} color="#f2f1ed" />
       <Toolkit />
       <ProjectPlayground
         projects={projects.map(
@@ -328,6 +331,7 @@ export default function Home() {
           <RollingText text="BACK TO TOP" /> ↑
         </a>
       </footer>
+      <LiquidEdge seed={3} max={180} color="#f2f1ed" />
       <NextPage
         href="/work"
         eyebrow="THERE’S MORE TO THE STORY"
