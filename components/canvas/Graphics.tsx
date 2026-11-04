@@ -788,11 +788,10 @@ function Renderer({
       }
     if (painting) paint.composite(state.size.width, state.size.height);
     gl.autoClear = true;
-    // Nothing drawn this frame (no world on screen, no trail): hide the
-    // canvas so the compositor skips a full-screen layer until it draws again.
-    const shown = active.current.length > 0 || painting ? "" : "hidden";
-    if (gl.domElement.style.visibility !== shown)
-      gl.domElement.style.visibility = shown;
+    // The canvas stays visible even when empty: an unchanged empty layer
+    // costs next to nothing, and hiding live WebGL canvases made Chromium's
+    // software renderer far more likely to stay busy (~370% CPU, with no
+    // calls from the page) after leaving the 3D sections.
     if (capture.current) {
       const copy = capture.current;
       capture.current = null;

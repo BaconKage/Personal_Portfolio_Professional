@@ -18,28 +18,6 @@ export default function Motion() {
   const [graphics, setGraphics] = useState(false);
   const [reduced, setReduced] = useState(true);
   const [preference, setPreference] = useState("system");
-  // Infinite CSS animations (live dots, scroll cues) keep the browser making
-  // frames even when off screen; sections out of view pause theirs.
-  useEffect(() => {
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries)
-          if (entry.isIntersecting)
-            (entry.target as HTMLElement).removeAttribute("data-offscreen");
-          else (entry.target as HTMLElement).setAttribute("data-offscreen", "");
-      },
-      { rootMargin: "100px 0px" },
-    );
-    document
-      .querySelectorAll("main > section, main > footer, body > header")
-      .forEach((el) => io.observe(el));
-    return () => {
-      io.disconnect();
-      document
-        .querySelectorAll("[data-offscreen]")
-        .forEach((el) => el.removeAttribute("data-offscreen"));
-    };
-  }, [path]);
   useEffect(() => {
     const media = matchMedia("(prefers-reduced-motion: reduce)");
     const update = (event?: Event) => {

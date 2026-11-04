@@ -74,38 +74,20 @@ export default function TextLens() {
   const path = usePathname();
   useEffect(() => {
     if (!matchMedia("(hover: hover) and (pointer: fine)").matches) return;
-    // Text is grouped by its section, and only the sections are observed:
-    // watching every text element (hundreds) made each frame's intersection
-    // pass expensive. Text in an on-screen section is a candidate.
-    const groups = new Map<Element, HTMLElement[]>();
-    const shown = new Set<Element>();
-    const visible = {
-      *[Symbol.iterator]() {
-        for (const group of shown) yield* groups.get(group) ?? [];
-      },
-    };
+    const visible = new Set<HTMLElement>();
     // Rects are re-read only when something may have moved them.
     const rects = new Map<HTMLElement, DOMRect>();
     let measured = 0,
       stale = true;
     const io = new IntersectionObserver((entries) => {
       for (const entry of entries)
-        if (entry.isIntersecting) shown.add(entry.target);
-        else shown.delete(entry.target);
-      stale = true;
+        if (entry.isIntersecting) visible.add(entry.target as HTMLElement);
+        else visible.delete(entry.target as HTMLElement);
     });
     const refresh = () => {
       io.disconnect();
-      groups.clear();
-      shown.clear();
-      for (const el of collect()) {
-        const group =
-          el.closest("section, footer, header, aside, dialog") ?? document.body;
-        const list = groups.get(group);
-        if (list) list.push(el);
-        else groups.set(group, [el]);
-      }
-      groups.forEach((_, group) => io.observe(group));
+      visible.clear();
+      collect().forEach((el) => io.observe(el));
       stale = true;
     };
     refresh();
