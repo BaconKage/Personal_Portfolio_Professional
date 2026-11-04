@@ -160,13 +160,13 @@ The list beside the stage is the accessible way in. Each tool is a button that l
 
 ## Cobalt ink on paper
 
-Over the light, paper-coloured sections (About, Research, Experience, case-study copy, the work index), the mouse leaves cobalt ink. It swirls with the pointer and dries away over about two seconds. Over dark sections and 3D stages the existing warp trail takes over, so every part of the page answers the pointer and the two effects never overlap.
+Over the light, paper-coloured sections (About, Research, Experience, case-study copy, the work index), the mouse leaves cobalt ink. It swirls with the pointer and dries away in about one and a half seconds. Over dark sections and 3D stages the existing warp trail takes over, so every part of the page answers the pointer and the two effects never overlap.
 
 `components/InkLayer.tsx` runs a second, small WebGL canvas with its own instance of the trail's velocity field (`ScreenPaint`, which now accepts per-instance fade settings and exposes its field texture). It draws that field as watercolour: a soft body, pigment pooled where the stroke's density changes, and a little paper grain. The canvas uses `mix-blend-mode: multiply`, which can only darken, so text under the ink stays as dark and legible as it was. It sits above page content and below the navigation, menus and dialogs. This canvas is separate because blend modes apply per element, and the shared 3D canvas must keep adding light.
 
 Ink is deposited only while the pointer is over a light surface. The background colour under the pointer is checked about every 40 ms and cached per element; 3D stages, project cards, dialogs and the navigation count as dark. The layer renders at half a pixel per CSS pixel (the browser's upscale adds a natural bleed) and only while ink is visible, then stops and clears. A page change wipes it and reuses the same canvas. It is mouse-only (no layer on touch screens), absent under reduced motion, and skipped where half-float render targets are unavailable.
 
-Measured in Chromium (software rendering, 1440 × 900): about 16,000 tinted screen pixels just after a stroke over About, about 8,000 at 1.2 s, about 1,300 at 2 s, and none by 4.5 s. The same stroke over the toolkit stage adds no ink: the change there matches the warp trail alone. Real-GPU, Safari and Firefox behaviour has not been checked here.
+Both pointer effects were toned down after review: the warp now pushes the image 36 px (was 64) with a 10 px colour split (was 24) and 5 px bands (was 8), and the ink is capped at 42% opacity (was 70%) with a narrower brush and a quicker dry. Measured in Chromium (software rendering, 1440 × 900): about 10,600 tinted screen pixels just after a stroke over About, about 1,400 at 1.2 s, and essentially none by 2 s. The same stroke over the toolkit stage adds no ink: the change there matches the warp trail alone. Real-GPU, Safari and Firefox behaviour has not been checked here.
 
 ## Liquid section edges
 

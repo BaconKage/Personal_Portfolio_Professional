@@ -46,7 +46,8 @@ void main() {
   float edge = clamp(length(vec2(gx, gy)) * 3.0, 0.0, 1.0);
   float body = smoothstep(0.01, 0.4, w);
   float grain = 0.9 + grainAt(floor(gl_FragCoord.xy * 0.5)) * 0.2;
-  float a = clamp((body * 0.5 + edge * 0.26) * grain, 0.0, 0.7);
+  // Kept light: a wash, not paint (previously up to 0.7).
+  float a = clamp((body * 0.3 + edge * 0.16) * grain, 0.0, 0.42);
   vec3 c = mix(uLight, uDeep, clamp(w * 1.2 + edge * 0.5, 0.0, 1.0));
   // Premultiplied, onto a transparent canvas.
   gl_FragColor = vec4(c * a, a);
@@ -130,9 +131,9 @@ export default function InkLayer() {
     // Strokes linger longer than the warp's, then dry away.
     const paint = createScreenPaint(renderer, {
       velocityDissipation: 0.98,
-      weight1Dissipation: 0.985,
+      weight1Dissipation: 0.978,
       weight2Dissipation: 0.94,
-      radiusScreenFraction: 1 / 16,
+      radiusScreenFraction: 1 / 20,
     });
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute(

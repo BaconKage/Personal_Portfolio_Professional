@@ -23,14 +23,15 @@ const settings = {
   weight2Dissipation: 0.8,
   curlScale: 0.02,
   curlStrength: 3,
+  // Toned down for a quieter trail (previously 64 / 8 / 0.02 / 24).
   /** How far the flow pushes the image, in CSS px at full strength. */
-  warp: 64,
+  warp: 36,
   /** Height of the pixel bands the image steps into, in CSS px. */
-  band: 8,
+  band: 5,
   /** Base shift along the stroke, as in buttermax (0.05 of the view). */
-  drift: 0.02,
+  drift: 0.01,
   /** RGB channel split, in CSS px at full strength. */
-  rgbSplit: 24,
+  rgbSplit: 10,
 };
 
 const vertex = /* glsl */ `
