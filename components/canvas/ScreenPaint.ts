@@ -162,7 +162,25 @@ void main() {
 
 export type ScreenPaint = ReturnType<typeof createScreenPaint>;
 
-export function createScreenPaint(renderer: THREE.WebGLRenderer) {
+export type ScreenPaintOptions = Partial<
+  Pick<
+    typeof settings,
+    | "velocityDissipation"
+    | "weight1Dissipation"
+    | "weight2Dissipation"
+    | "radiusScreenFraction"
+    | "radiusDistanceRange"
+  >
+>;
+/**
+ * `options` tunes one instance (the paper ink keeps its stroke longer than
+ * the warp); everything else uses the shared settings above.
+ */
+export function createScreenPaint(
+  renderer: THREE.WebGLRenderer,
+  options: ScreenPaintOptions = {},
+) {
+  const config = { ...settings, ...options };
   const target = (linear = true) =>
     new THREE.WebGLRenderTarget(1, 1, {
       type: THREE.HalfFloatType,
@@ -219,17 +237,17 @@ export function createScreenPaint(renderer: THREE.WebGLRenderer) {
     u_paintTexelSize: { value: paintTexelSize },
     u_drawFrom: { value: from },
     u_drawTo: { value: to },
-    u_pushStrength: { value: settings.pushStrength },
+    u_pushStrength: { value: config.pushStrength },
     u_dissipations: {
       value: new THREE.Vector3(
-        settings.velocityDissipation,
-        settings.weight1Dissipation,
-        settings.weight2Dissipation,
+        config.velocityDissipation,
+        config.weight1Dissipation,
+        config.weight2Dissipation,
       ),
     },
     u_vel: { value: vel },
-    u_curlScale: { value: settings.curlScale },
-    u_curlStrength: { value: settings.curlStrength },
+    u_curlScale: { value: config.curlScale },
+    u_curlStrength: { value: config.curlStrength },
   });
   const copy = material(copyFragment, { u_texture: { value: null } });
   const blur = material(blurFragment, {
@@ -245,10 +263,10 @@ export function createScreenPaint(renderer: THREE.WebGLRenderer) {
     u_screenPaintTexture: { value: curr.texture },
     u_resolution: { value: resolution },
     u_time: { value: 0 },
-    u_warp: { value: settings.warp },
-    u_band: { value: settings.band },
-    u_drift: { value: settings.drift },
-    u_rgbSplit: { value: settings.rgbSplit },
+    u_warp: { value: config.warp },
+    u_band: { value: config.band },
+    u_drift: { value: config.drift },
+    u_rgbSplit: { value: config.rgbSplit },
   });
   distortion.transparent = false;
 
@@ -316,9 +334,9 @@ export function createScreenPaint(renderer: THREE.WebGLRenderer) {
       // Frame-rate independent fading: the same trail at 60, 120 or 144Hz.
       const frames = dt * 60;
       (paint.uniforms.u_dissipations.value as THREE.Vector3).set(
-        Math.pow(settings.velocityDissipation, frames),
-        Math.pow(settings.weight1Dissipation, frames),
-        Math.pow(settings.weight2Dissipation, frames),
+        Math.pow(config.velocityDissipation, frames),
+        Math.pow(config.weight1Dissipation, frames),
+        Math.pow(config.weight2Dissipation, frames),
       );
       distortion.uniforms.u_time.value += dt;
       [prev, curr] = [curr, prev];
@@ -330,9 +348,9 @@ export function createScreenPaint(renderer: THREE.WebGLRenderer) {
       const distance = moved
         ? Math.hypot(pointer.x - previous.x, pointer.y - previous.y)
         : 0;
-      const maxRadius = Math.max(56, width * settings.radiusScreenFraction);
+      const maxRadius = Math.max(56, width * config.radiusScreenFraction);
       const radius =
-        (THREE.MathUtils.clamp(distance / settings.radiusDistanceRange, 0, 1) *
+        (THREE.MathUtils.clamp(distance / config.radiusDistanceRange, 0, 1) *
           maxRadius *
           ph) /
         height;
@@ -346,7 +364,7 @@ export function createScreenPaint(renderer: THREE.WebGLRenderer) {
       }
       step.set(to.x - from.x, to.y - from.y).multiplyScalar(dt * 0.8);
       vel
-        .multiplyScalar(Math.pow(settings.accelerationDissipation, frames))
+        .multiplyScalar(Math.pow(config.accelerationDissipation, frames))
         .add(step);
       renderer.setScissorTest(false);
       draw(paint, curr);
@@ -382,6 +400,10 @@ export function createScreenPaint(renderer: THREE.WebGLRenderer) {
     reset() {
       started = false;
       if (width) clear();
+    },
+    /** The current field (xy velocity, zw stroke weight), for layers that draw from it. */
+    get texture() {
+      return curr.texture;
     },
     dispose() {
       for (const rt of [prev, curr, low, lowBlur]) rt.dispose();

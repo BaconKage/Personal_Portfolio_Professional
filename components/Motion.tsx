@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import dynamic from "next/dynamic";
 import Cursor from "./Cursor";
 import TextLens from "./TextLens";
+import InkLayer from "./InkLayer";
 const Graphics = dynamic(() => import("@/components/canvas/Graphics"), {
   ssr: false,
 });
@@ -69,6 +70,7 @@ export default function Motion() {
       {graphics && <Graphics />}
       {!reduced && <Cursor />}
       {!reduced && <TextLens />}
+      {!reduced && <InkLayer />}
       {!reduced && <RouteTransition reduced={reduced} />}
       {!reduced && <div className="scroll-progress" aria-hidden="true" />}
       <div className="motion-setting">
