@@ -22,6 +22,7 @@ import { createTransitionField } from "./TransitionField";
 import { createScreenPaint } from "./ScreenPaint";
 import { createProjectSheet, type ProjectSheet } from "./ProjectSheet";
 import { projectZoom } from "@/lib/zoom";
+import { getCoreState, sampleCore } from "@/lib/core-sequence";
 
 const loaders = {
   portal: () => import("./PortalWorld"),
@@ -36,6 +37,8 @@ const loaders = {
 type WorldModule = { default: React.ComponentType<SceneProps> };
 /** Shortest time a project sheet takes to unfurl, however fast the scroll. */
 const LANDING_SECONDS = 1.4;
+/** Furthest a sheet's middle trails its edges at full scroll speed, in px. */
+const SHEET_BEND = 26;
 const loading = new Map<SceneId, Promise<WorldModule>>();
 function preload(id: SceneId) {
   if (!loading.has(id)) loading.set(id, loaders[id]());
@@ -213,6 +216,8 @@ function Renderer({
   const capture = useRef<((canvas: HTMLCanvasElement) => void) | null>(null);
   const last = useRef(0);
   const dirty = useRef(true);
+  // Whether the last frame put anything on the canvas (see the tick below).
+  const drew = useRef(false);
   const diagnostics = useRef({ frames: 0, elapsed: 0 });
   const measuring = useRef({ until: Infinity, height: 0 });
   const bridge = useMemo(() => createTransitionField(), []);
@@ -346,6 +351,8 @@ function Renderer({
         hover: number;
         hx: number;
         hy: number;
+        top: number;
+        velocity: number;
       }
     >(),
   );
@@ -387,6 +394,10 @@ function Renderer({
     const tick = (_: number, deltaMs: number) => {
       if (document.hidden) return;
       const now = performance.now();
+      // A frame that follows one with nothing drawn arrives at the display's
+      // own cadence: the budget judges load against that, not a fixed 60Hz.
+      if (!drew.current) budget.calibrate(deltaMs);
+      drew.current = false;
       if (
         !dirty.current &&
         !active.current.length &&
@@ -401,7 +412,7 @@ function Renderer({
     };
     gsap.ticker.add(tick);
     return () => gsap.ticker.remove(tick);
-  }, [advance]);
+  }, [advance, budget]);
 
   useEffect(() => {
     setDpr(budget.dpr);
@@ -588,10 +599,13 @@ function Renderer({
     if (document.hidden) return;
     const now = performance.now();
     const frame = ++frameCount.current;
+    // The reactor's output reaches every card and the mouse trail.
+    const power = sampleCore(getCoreState(), now).energy;
     // Last resort on a device still missing frames at the lowest resolution:
     // the trail is the one optional full-screen pass.
     const painting = !!paint && !budget.saturated && now < brush.current.until;
     if (painting) {
+      drew.current = true;
       const b = brush.current;
       paint.resize(state.size.width, state.size.height);
       if (!b.last) {
@@ -631,6 +645,7 @@ function Renderer({
       const r = s.layout.rect,
         clip = s.layout.clip;
       if (!s.ready || !r || r.width < 1 || r.height < 1) continue;
+      drew.current = true;
       const sheet = sheetFor(s);
       if (sheet) {
         // Scroll sets the target: 0 as the card's top enters, 1 once its top
@@ -657,10 +672,23 @@ function Renderer({
             hover: 0,
             hx: 0.5,
             hy: 0.5,
+            top: r.top,
+            velocity: 0,
           };
           landing.current.set(s, land);
         }
-        const dt = Math.min((now - land.seen) / 1000, 0.05);
+        const elapsed = (now - land.seen) / 1000;
+        const dt = Math.min(elapsed, 0.05);
+        // The card's own speed across the screen (px/s), eased so the sheet
+        // flexes and springs back instead of twitching. The page zoom moves
+        // cards too, but that is not scrolling.
+        const speed =
+          elapsed > 0.001 && !projectZoom.element
+            ? (r.top - land.top) / elapsed
+            : 0;
+        land.top = r.top;
+        land.velocity = THREE.MathUtils.damp(land.velocity, speed, 9, dt);
+        const bend = SHEET_BEND * Math.tanh(land.velocity / 2600);
         land.seen = now;
         land.frame = frame;
         const diff = target - land.shown;
@@ -722,6 +750,9 @@ function Renderer({
             height,
             { width: s.element.offsetWidth, height: s.element.offsetHeight },
             { amount: land.hover, x: land.hx, y: land.hy },
+            bend,
+            power,
+            (now / 1000) % 3600,
           );
           if (s.element.dataset.ready !== "true") {
             // The sheet now paints the card; the DOM card steps aside.
@@ -773,7 +804,7 @@ function Renderer({
         gl.clearDepth();
         gl.render(bridge.scene, bridge.camera);
       }
-    if (painting) paint.composite(state.size.width, state.size.height);
+    if (painting) paint.composite(state.size.width, state.size.height, power);
     gl.autoClear = true;
     if (capture.current) {
       const copy = capture.current;

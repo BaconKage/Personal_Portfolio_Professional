@@ -131,6 +131,7 @@ uniform float u_warp;
 uniform float u_band;
 uniform float u_drift;
 uniform float u_rgbSplit;
+uniform float u_power;
 varying vec2 v_uv;
 void main() {
   vec4 data = texture2D(u_screenPaintTexture, v_uv);
@@ -157,6 +158,10 @@ void main() {
   vec4 b = texture2D(u_texture, uv - split);
   vec4 color = vec4(r.r, g.g, b.b, max(g.a, max(r.a, b.a)));
   color.rgb *= mix(1.0, 0.98, fluid);
+  // A powered core charges the trail: it glows cyan over whatever is under
+  // it, page included (premultiplied "over", so it reads on light and dark).
+  float glow = clamp(fluid * 1.6, 0.0, 1.0) * u_power * 0.32;
+  color = color * (1.0 - glow) + vec4(vec3(0.37, 0.83, 1.0) * glow, glow);
   gl_FragColor = color;
 }`;
 
@@ -249,6 +254,7 @@ export function createScreenPaint(renderer: THREE.WebGLRenderer) {
     u_band: { value: settings.band },
     u_drift: { value: settings.drift },
     u_rgbSplit: { value: settings.rgbSplit },
+    u_power: { value: 0 },
   });
   distortion.transparent = false;
 
@@ -360,8 +366,12 @@ export function createScreenPaint(renderer: THREE.WebGLRenderer) {
       draw(blur, low);
       renderer.setRenderTarget(null);
     },
-    /** Re-draw what is on the canvas through the distortion. */
-    composite(cssWidth: number, cssHeight: number) {
+    /**
+     * Re-draw what is on the canvas through the distortion. The reactor's
+     * output (0..1) lights the trail.
+     */
+    composite(cssWidth: number, cssHeight: number, power = 0) {
+      distortion.uniforms.u_power.value = power;
       renderer.getDrawingBufferSize(drawSize);
       if (
         frame.image.width !== drawSize.x ||

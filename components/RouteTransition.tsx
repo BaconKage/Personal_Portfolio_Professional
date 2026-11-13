@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { gsap } from "gsap";
 import { lockScroll, unlockScroll } from "@/lib/scroll";
 import { projectZoom } from "@/lib/zoom";
+import { playWhoosh } from "@/lib/sound";
 
 /** Grab the canvas's next frame (bounded), or null if it never comes. */
 function captureFrame(isCurrent: () => boolean) {
@@ -58,6 +59,7 @@ export default function RouteTransition({ reduced }: { reduced: boolean }) {
       event.preventDefault(); event.stopPropagation();
       if(pending.current) return;
       pending.current = true;
+      playWhoosh('travel');
       // Hold the page still under the curtain; SmoothScroll releases on arrival.
       lockScroll('route');
       anchor.closest('dialog')?.close();

@@ -84,3 +84,21 @@ test("Only sustained misses at the lowest resolution shed optional passes", () =
   assert.equal(budget.dpr, 0.75);
   assert.equal(budget.saturated, true);
 });
+test("A 30Hz frame cap (energy saver, battery) is not read as load", () => {
+  const capped = createRenderBudget(1.25, 0.75);
+  for (let i = 0; i < 30; i++) capped.calibrate(33.3);
+  assert.ok(Math.abs(capped.interval - 33.3) < 0.01);
+  run(capped, 33.3, 3000);
+  assert.equal(capped.dpr, 1.25, "Lower resolution cannot beat a frame cap");
+  assert.equal(capped.saturated, false, "The mouse trail stays on");
+  run(capped, 55, 3000);
+  assert.equal(capped.dpr, 0.75, "Real load under a cap still steps down");
+  const fast = createRenderBudget(1.25, 0.75);
+  for (let i = 0; i < 30; i++) fast.calibrate(6.94);
+  assert.ok(Math.abs(fast.interval - 1000 / 60) < 0.01, "144Hz is judged as 60fps");
+  const noisy = createRenderBudget(1.25, 0.75);
+  for (const ms of [16.7, 16.6, 90, 16.7, 4, 16.8, 16.7, 48, 16.7]) noisy.calibrate(ms);
+  assert.ok(Math.abs(noisy.interval - 16.7) < 0.1, "Hitches do not skew the cadence");
+  run(noisy, 33.3, 3000);
+  assert.equal(noisy.dpr, 0.75);
+});

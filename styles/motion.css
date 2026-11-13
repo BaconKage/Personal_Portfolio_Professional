@@ -704,3 +704,302 @@ html:not([data-motion="reduced"])
 .hero h1 .hero-line-inner > span.hero-plain {
   color: inherit;
 }
+
+/* ─── Hairline rules that draw themselves (choreography adds .rule-draw) ─── */
+/* The rule becomes a pseudo-element scaled on the compositor; the border it
+   replaces keeps its 1px so nothing shifts. */
+.rule-draw {
+  position: relative;
+  border-top-color: transparent;
+}
+.rule-draw::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -1px;
+  height: 1px;
+  background: var(--rule, var(--line));
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  transition: transform 1.3s cubic-bezier(0.76, 0, 0.24, 1);
+  pointer-events: none;
+}
+.rule-draw[data-drawn="true"]::before {
+  transform: none;
+}
+.contact-bottom {
+  --rule: #ffffff60;
+}
+
+/* ─── Experience list: the row under the pointer holds focus ─── */
+@media (hover: hover) and (pointer: fine) {
+  html:not([data-motion="reduced"]) .experience-row {
+    transition: opacity 0.45s ease;
+  }
+  html:not([data-motion="reduced"]) .experience-row h3 {
+    transition:
+      transform 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+      color 0.3s ease;
+  }
+  html:not([data-motion="reduced"])
+    .experience:has(.experience-row:hover)
+    .experience-row:not(:hover) {
+    opacity: 0.36;
+  }
+  html:not([data-motion="reduced"]) .experience-row:hover h3 {
+    transform: translateX(14px);
+    color: var(--blue);
+  }
+}
+
+/* ─── Sound toggle: bars move only while sound is on ─── */
+.sound-toggle {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+.sound-toggle-text {
+  gap: 10px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font:
+    12px var(--font-mono),
+    monospace;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  opacity: 0.72;
+  transition: opacity 0.3s;
+}
+.sound-toggle-text:hover,
+.sound-toggle-text[data-on] {
+  opacity: 1;
+}
+.sound-label b {
+  display: inline-block;
+  min-width: 2.1em;
+  font-weight: 400;
+  text-align: left;
+}
+.sound-bars {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 14px;
+}
+.sound-bars > span {
+  width: 2px;
+  height: 100%;
+  border-radius: 1px;
+  background: currentColor;
+  transform: scaleY(0.16);
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.sound-toggle[data-on] .sound-bars > span {
+  transform: scaleY(0.7);
+  animation: sound-bar 1.1s ease-in-out infinite;
+}
+.sound-toggle[data-on] .sound-bars > span:nth-child(1) {
+  animation-delay: -0.2s;
+}
+.sound-toggle[data-on] .sound-bars > span:nth-child(2) {
+  animation-delay: -0.75s;
+}
+.sound-toggle[data-on] .sound-bars > span:nth-child(3) {
+  animation-delay: -0.45s;
+}
+.sound-toggle[data-on] .sound-bars > span:nth-child(4) {
+  animation-delay: -0.95s;
+}
+@keyframes sound-bar {
+  0%,
+  100% {
+    transform: scaleY(0.28);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+.float-pill.sound-toggle-icon {
+  width: 48px;
+  padding: 0;
+  justify-content: center;
+}
+.menu-actions {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+}
+@media (max-width: 767px) {
+  .menu-actions {
+    gap: 16px;
+  }
+  .menu-actions .sound-label {
+    display: none;
+  }
+}
+
+/* ─── Power pill: once energised, the core can be powered down anywhere ─── */
+.float-power {
+  gap: 10px;
+  background: #06121f;
+  border-color: #5fd4ff66;
+  color: #dff6ff;
+  box-shadow:
+    0 0 0 1px #5fd4ff22,
+    0 0 24px #3fb6ff55;
+  animation: power-pill-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.float-power:hover {
+  background: #0b2a40;
+  border-color: #7fe2ff;
+  color: #fff;
+}
+.float-power[aria-disabled="true"] {
+  cursor: default;
+}
+.float-power-light {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #7fe2ff;
+  box-shadow:
+    0 0 0 3px #5fd4ff33,
+    0 0 12px #5fd4ff;
+  animation: power-pulse 1.6s ease-in-out infinite;
+}
+.float-power[data-phase="cooling"] .float-power-light {
+  opacity: 0.4;
+  animation: none;
+}
+@keyframes power-pill-in {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+}
+@keyframes power-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+@media (max-width: 767px) {
+  .float-power {
+    width: 44px;
+    padding: 0;
+    justify-content: center;
+  }
+  .float-power .roll {
+    display: none;
+  }
+}
+
+/* ─── The powered core reaches the whole site (html[data-power]) ─── */
+/* CoreAmbience publishes the reactor's phase. Accents ease to its cyan while
+   it charges and runs, and ease back as it cools. The WebGL loop reads the
+   same state for the mouse trail and the card edges. */
+.scroll-progress {
+  transition:
+    background-color 1.6s ease,
+    box-shadow 1.6s ease;
+}
+.wordmark span,
+.menu-index {
+  transition:
+    color 1.6s ease,
+    text-shadow 1.6s ease;
+}
+.float-pill {
+  transition:
+    background-color 0.3s,
+    color 0.3s,
+    border-color 0.3s,
+    box-shadow 1.2s ease;
+}
+:is(.location, .menu-time) i,
+.menu-dots i,
+.footer,
+.case-footer,
+.cursor-label > span {
+  transition:
+    background-color 1.6s ease,
+    box-shadow 1.6s ease,
+    color 1.6s ease,
+    transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.menu-dots i {
+  transition:
+    background-color 1.6s ease,
+    box-shadow 1.6s ease,
+    transform 0.45s cubic-bezier(0.76, 0, 0.24, 1);
+}
+html[data-power] {
+  /* The text brush (TextLens) takes the core's colour everywhere. */
+  --lens: #2fbfff;
+}
+html[data-power] .scroll-progress {
+  background-color: #5fd4ff;
+  box-shadow:
+    0 0 12px #3fb6ffcc,
+    0 0 28px #2f9dff66;
+}
+html[data-power] .wordmark span {
+  color: #5fd4ff;
+  text-shadow: 0 0 12px #5fd4ffaa;
+}
+html[data-power]
+  .float-pill:not(.float-power) {
+  box-shadow:
+    0 8px 30px #06091826,
+    0 0 0 1px #5fd4ff55,
+    0 0 22px #3fb6ff44;
+}
+html[data-power] .menu-dots i {
+  background: #5fd4ff;
+  box-shadow: 0 0 8px #5fd4ff;
+}
+html[data-power]
+  :is(.location, .menu-time)
+  i {
+  background: #5fd4ff;
+  box-shadow:
+    0 0 0 4px #5fd4ff33,
+    0 0 12px #5fd4ff;
+}
+html[data-power] .cursor-label > span {
+  background: #5fd4ff;
+  color: #04121c;
+  box-shadow: 0 0 24px #3fb6ff88;
+}
+html[data-power] .site-menu {
+  background: radial-gradient(120% 80% at 82% 0%, #0b2743 0%, #060b18 62%);
+}
+html[data-power] .menu-links a {
+  border-bottom-color: #5fd4ff26;
+}
+html[data-power]
+  .menu-links
+  a:is(:hover, :focus-visible) {
+  color: #8fe6ff;
+  text-shadow: 0 0 34px #3fb6ff66;
+}
+html[data-power] .menu-index {
+  color: #5fd4ff;
+}
+html[data-power]
+  :is(.footer, .case-footer) {
+  box-shadow:
+    inset 0 2px 0 #5fd4ff,
+    inset 0 16px 24px -16px #3fb6ff99;
+}
+html[data-power]
+  .next-page-ring
+  circle:last-child {
+  stroke: #5fd4ff;
+}
+html[data-power] .next-page-arrow {
+  color: #5fd4ff;
+}

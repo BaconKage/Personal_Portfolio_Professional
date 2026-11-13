@@ -56,6 +56,11 @@ export function getRenderProfile(device: DeviceBudget) {
   };
 }
 
+/** Never ask for more than 60fps; never excuse less than a 30Hz cap. */
+const FASTEST_INTERVAL = 1000 / 60;
+const SLOWEST_INTERVAL = 34;
+const CALIBRATION_FRAMES = 9;
+
 /**
  * Resolution only ever steps down, in a few large steps. Every change
  * reallocates the drawing buffer (a visible hitch), so oscillating between
@@ -68,6 +73,11 @@ export function createRenderBudget(maxDpr: number, minDpr: number) {
     late = 0,
     saturated = false;
   let cooldown = 1200;
+  // The cadence the browser delivers frames at when nothing is drawn. Energy
+  // saver, battery modes and some displays cap it at 30Hz: a cap is not
+  // load, and lowering resolution cannot buy back a single frame of it.
+  let interval = FASTEST_INTERVAL;
+  const idle: number[] = [];
   const step = () =>
     Math.max(0.125, Math.ceil(((maxDpr - minDpr) / 3) * 8) / 8);
   return {
@@ -78,9 +88,35 @@ export function createRenderBudget(maxDpr: number, minDpr: number) {
     get saturated() {
       return saturated;
     },
+    /** The frame interval frames are judged against, in ms. */
+    get interval() {
+      return interval;
+    },
     reset() {
       elapsed = frames = late = 0;
       cooldown = Math.max(cooldown, 1200);
+    },
+    /**
+     * Feed the time between two frames in which nothing was drawn. Their
+     * median is the display's own cadence: late frames only lengthen a few
+     * samples, and the catch-up frames after them only shorten a few.
+     */
+    calibrate(ms: number) {
+      if (!Number.isFinite(ms) || ms <= 0 || ms > 250) {
+        idle.length = 0;
+        return;
+      }
+      idle.push(ms);
+      if (idle.length < CALIBRATION_FRAMES) return;
+      const median = idle.sort((a, b) => a - b)[CALIBRATION_FRAMES >> 1];
+      idle.length = 0;
+      const next = Math.min(
+        SLOWEST_INTERVAL,
+        Math.max(FASTEST_INTERVAL, median),
+      );
+      // A changed cadence makes the frames gathered so far incomparable.
+      if (Math.abs(next - interval) > 2) elapsed = frames = late = 0;
+      interval = next;
     },
     resize(maximum: number, minimum: number) {
       maxDpr = maximum;
@@ -101,13 +137,16 @@ export function createRenderBudget(maxDpr: number, minDpr: number) {
       }
       elapsed += ms;
       frames++;
-      // A frame over 20ms has missed a 60Hz vsync: a visible stutter.
-      if (ms > 20) late++;
+      // A frame a fifth over the display's interval has missed a vsync (20ms
+      // at 60Hz): a visible stutter.
+      const limit = interval * 1.2;
+      if (ms > limit) late++;
       if (elapsed < 1000) return null;
       const average = elapsed / frames,
         missed = late / frames;
-      // Sustained, not transient: below ~50fps with a fifth of frames late.
-      const overloaded = average > 20 && missed > 0.2;
+      // Sustained, not transient: a fifth slower than the display delivers
+      // (below ~50fps at 60Hz), with a fifth of frames late.
+      const overloaded = average > limit && missed > 0.2;
       elapsed = frames = late = 0;
       if (!overloaded) return null;
       if (dpr > minDpr) {

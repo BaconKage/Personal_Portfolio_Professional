@@ -2,6 +2,67 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
 
+/**
+ * Lenis already eases the scroll position. A long scrub on top of it is a
+ * second, slower lag: parallax kept drifting for a second after the page had
+ * stopped. A short one keeps the softness and stays attached to the scroll.
+ */
+const SCRUB = 0.28;
+
+const GLYPHS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/+<>";
+/**
+ * Monospace labels decode into place: characters resolve left to right out
+ * of cycling glyphs. Only text nodes are rewritten (same width per glyph in
+ * a monospace face, so nothing reflows) and they are restored on cleanup.
+ */
+function decodeLabel(el: HTMLElement, cleanups: (() => void)[]) {
+  const nodes: { node: Text; text: string; start: number }[] = [];
+  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  let total = 0;
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    const text = node.nodeValue || "";
+    if (!text.trim()) continue;
+    nodes.push({ node: node as Text, text, start: total });
+    total += text.length;
+  }
+  if (!total) return;
+  const restore = () => {
+    for (const { node, text } of nodes)
+      if (node.nodeValue !== text) node.nodeValue = text;
+  };
+  const state = { shown: 0 };
+  let noise: string[] = [],
+    bucket = -1;
+  gsap.to(state, {
+    shown: total,
+    duration: gsap.utils.clamp(0.55, 1.15, 0.4 + total * 0.017),
+    ease: "none",
+    scrollTrigger: { trigger: el, start: "top 94%", once: true },
+    onUpdate: () => {
+      // Glyphs change every 45ms, not every frame: legible, and fewer writes.
+      const now = Math.floor(performance.now() / 45);
+      if (now !== bucket) {
+        bucket = now;
+        noise = Array.from(
+          { length: total },
+          () => GLYPHS[(Math.random() * GLYPHS.length) | 0],
+        );
+      }
+      const shown = Math.floor(state.shown);
+      for (const { node, text, start } of nodes) {
+        let next = "";
+        for (let i = 0; i < text.length; i++) {
+          const ch = text[i];
+          next += start + i < shown || ch.trim() === "" ? ch : noise[start + i];
+        }
+        if (node.nodeValue !== next) node.nodeValue = next;
+      }
+    },
+    onComplete: restore,
+  });
+  cleanups.push(restore);
+}
+
 /** All DOM animation is scoped and reversible when a route or motion preference changes. */
 export function mountChoreography() {
   gsap.registerPlugin(ScrollTrigger, SplitText);
@@ -16,7 +77,7 @@ export function mountChoreography() {
           trigger: hero,
           start: "top top",
           end: "bottom top",
-          scrub: 1,
+          scrub: SCRUB,
           pin: false,
           pinSpacing: true,
           invalidateOnRefresh: true,
@@ -52,7 +113,7 @@ export function mountChoreography() {
           trigger: el,
           start: "top 95%",
           end: "top 12%",
-          scrub: 0.8,
+          scrub: SCRUB,
         },
       });
       // Card copy arrives once the card has landed. With a WebGL sheet that
@@ -132,7 +193,7 @@ export function mountChoreography() {
             trigger: el,
             start: "top bottom",
             end: "bottom top",
-            scrub: 1,
+            scrub: SCRUB,
           },
         },
       );
@@ -195,7 +256,7 @@ export function mountChoreography() {
             trigger: ".discipline-band",
             start: "top bottom",
             end: "bottom top",
-            scrub: 1,
+            scrub: SCRUB,
           },
         },
       ),
@@ -207,7 +268,7 @@ export function mountChoreography() {
           trigger: journey,
           start: "top top",
           end: "bottom bottom",
-          scrub: 0.65,
+          scrub: SCRUB,
         },
       });
       flight
@@ -237,7 +298,7 @@ export function mountChoreography() {
             trigger: ".about-copy",
             start: "top 82%",
             end: "top 35%",
-            scrub: 0.5,
+            scrub: SCRUB,
           },
         },
       );
@@ -253,10 +314,40 @@ export function mountChoreography() {
             trigger: ".research",
             start: "top bottom",
             end: "bottom top",
-            scrub: 1,
+            scrub: SCRUB,
           },
         },
       );
+    // Section labels decode as they arrive. Labels whose text React updates
+    // (playground detail) or that sit inside other reveals are left alone.
+    document.querySelectorAll<HTMLElement>("main .eyebrow").forEach((el) => {
+      if (
+        !el.closest(
+          ".hero,.project,.next-page,.playground-detail,.case-visual,.preloader",
+        )
+      )
+        decodeLabel(el, cleanups);
+    });
+    // Hairline rules draw themselves across instead of simply being there.
+    document
+      .querySelectorAll<HTMLElement>(
+        ".personal-line,.experience-row,.recognition,.contact-bottom",
+      )
+      .forEach((el) => {
+        el.classList.add("rule-draw");
+        ScrollTrigger.create({
+          trigger: el,
+          start: "top 94%",
+          once: true,
+          onEnter: () => {
+            el.dataset.drawn = "true";
+          },
+        });
+        cleanups.push(() => {
+          el.classList.remove("rule-draw");
+          delete el.dataset.drawn;
+        });
+      });
     document.querySelectorAll(".experience-row").forEach((el) => {
       gsap.from(el.children, {
         y: 35,
@@ -276,7 +367,7 @@ export function mountChoreography() {
           trigger: ".contact",
           start: "top 95%",
           end: "top 20%",
-          scrub: 1,
+          scrub: SCRUB,
         },
       });
     if (caseTitles.length)

@@ -7,6 +7,9 @@ import type { SceneId } from "@/components/Artwork";
  * small "from" rect into the card's DOM rect. Each vertex lands on its own
  * schedule, so the edges bend and stretch until the sheet settles flat, and
  * the image blooms from brand blue into full colour as it arrives.
+ *
+ * Once landed it stays a sheet: scroll speed bows it (the middle trails the
+ * edges) and pulls its colour channels apart, then it springs back flat.
  */
 
 type Background = {
@@ -55,6 +58,7 @@ uniform vec2 u_domXY;
 uniform vec2 u_domWH;
 uniform vec2 u_viewport;
 uniform float u_showRatio;
+uniform float u_bend;
 varying vec2 v_uv;
 varying vec2 v_domWH;
 varying float v_showRatio;
@@ -74,6 +78,8 @@ void main() {
   float s = sin(rot), c = cos(rot);
   base = vec2(c * base.x - s * base.y, s * base.x + c * base.y);
   vec2 screen = base + pivot + domXY;
+  // Scroll speed bows the sheet: held by its sides, the middle lags behind.
+  screen.y -= u_bend * sin(p.x * 3.14159265);
   gl_Position = vec4(
     screen.x / u_viewport.x * 2.0 - 1.0,
     1.0 - screen.y / u_viewport.y * 2.0,
@@ -94,6 +100,9 @@ uniform vec3 u_tint;
 uniform float u_radius;
 uniform float u_hover;
 uniform vec2 u_mouse;
+uniform float u_bend;
+uniform float u_power;
+uniform float u_time;
 varying vec2 v_uv;
 varying vec2 v_domWH;
 varying float v_showRatio;
@@ -118,13 +127,24 @@ void main() {
   float inner = sdRoundedBox((v_uv - 0.5) * v_domWH, v_domWH * 0.5 - border, max(u_radius - border * 0.3, 4.0));
   float inside = clamp(0.5 - inner / max(fwidth(inner), 1e-4), 0.0, 1.0);
   // The world was rendered linear onto transparent black; finish it here.
-  vec4 world = texture2D(u_texture, worldUv) * inside;
-  vec3 light = world.rgb;
+  // Fast scrolling smears red ahead of blue along the direction of travel.
+  vec2 split = vec2(0.0, u_bend * 0.3 / v_domWH.y);
+  vec4 red = texture2D(u_texture, worldUv + split) * inside;
+  vec4 green = texture2D(u_texture, worldUv) * inside;
+  vec4 blue = texture2D(u_texture, worldUv - split) * inside;
+  vec3 light = vec3(red.r, green.g, blue.b);
+  vec3 cover = vec3(red.a, green.a, blue.a);
   #ifdef TONE_MAPPING
   light = toneMapping(light);
   #endif
   light = linearToOutputTexel(vec4(light, 1.0)).rgb;
-  vec3 color = light + bg * (1.0 - world.a);
+  vec3 color = light + bg * (1.0 - cover);
+  // A powered core runs current round the card: a cyan rim just inside its
+  // edge, with two brighter pulses circling it.
+  vec2 fromCentre = (v_uv - 0.5) * v_domWH;
+  float rim = exp(min(d, 0.0) / 16.0);
+  float pulse = pow(0.5 + 0.5 * sin(atan(fromCentre.y, fromCentre.x) * 2.0 - u_time * 1.4), 8.0);
+  color += vec3(0.3, 0.78, 1.0) * rim * (0.16 + pulse * 0.85) * u_power;
   vec3 tinted = max(u_tint, vec3(dot(color, vec3(0.299, 0.587, 0.114))));
   gl_FragColor = vec4(mix(tinted, color, v_showRatio), alpha);
 }`;
@@ -162,6 +182,9 @@ export function createProjectSheet(
     u_tint: { value: rgb("#2f55ff") },
     u_radius: { value: 12 },
     u_hover: { value: 0 },
+    u_bend: { value: 0 },
+    u_power: { value: 0 },
+    u_time: { value: 0 },
     u_mouse: { value: new THREE.Vector2(0.5, 0.5) },
   };
   const material = new THREE.ShaderMaterial({
@@ -209,7 +232,15 @@ export function createProjectSheet(
       layout: { width: number; height: number } = rect,
       // Hover amount 0..1 and the pointer in card space (0..1, y down).
       hover = { amount: 0, x: 0.5, y: 0.5 },
+      // How far scroll speed bows the sheet, in CSS px (signed).
+      bend = 0,
+      // The reactor's output 0..1 (it lights the card's edge), and seconds.
+      power = 0,
+      time = 0,
     ) {
+      uniforms.u_power.value = power;
+      uniforms.u_time.value = time;
+      uniforms.u_bend.value = bend;
       uniforms.u_hover.value = hover.amount;
       uniforms.u_mouse.value.set(hover.x, hover.y);
       const dpr = renderer.getPixelRatio();

@@ -37,7 +37,7 @@ type Stamp = { x: number; y: number; k: number; rim: number };
 type Hit = { el: HTMLElement; rect: DOMRect };
 type Style = { ok: boolean; accent: string };
 
-const styles = new WeakMap<HTMLElement, Style>();
+let styles = new WeakMap<HTMLElement, Style>();
 /** Background-clip would erase a filled background, so those are skipped. */
 function describe(el: HTMLElement): Style {
   let style = styles.get(el);
@@ -105,6 +105,14 @@ export default function TextLens() {
       rescan = setTimeout(refresh, 250);
     });
     mutations.observe(document.body, { childList: true, subtree: true });
+    // The powered core changes the accent (--lens): forget the cached ones.
+    const power = new MutationObserver(() => {
+      styles = new WeakMap();
+    });
+    power.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-power"],
+    });
 
     const mouse = { x: 0, y: 0, inside: false };
     const head = { x: 0, y: 0 };
@@ -296,6 +304,7 @@ export default function TextLens() {
       clearTimeout(rescan);
       io.disconnect();
       mutations.disconnect();
+      power.disconnect();
       lensed.forEach(clear);
       window.removeEventListener("pointermove", move);
       window.removeEventListener("scroll", scroll);

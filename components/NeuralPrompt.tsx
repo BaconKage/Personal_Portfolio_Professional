@@ -62,7 +62,8 @@ export default function NeuralPrompt() {
       observer.disconnect();
       window.removeEventListener("neural-signal", fire);
       unsubscribe();
-      resetCore();
+      // The core keeps its state across pages (see CoreAmbience): leaving
+      // the hero does not power it down.
       delete hero.dataset.corePhase;
     };
   }, []);

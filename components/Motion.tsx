@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import dynamic from "next/dynamic";
 import Cursor from "./Cursor";
 import TextLens from "./TextLens";
+import CoreAmbience from "./CoreAmbience";
 const Graphics = dynamic(() => import("@/components/canvas/Graphics"), {
   ssr: false,
 });
@@ -65,6 +66,7 @@ export default function Motion() {
   }, [path, reduced]);
   return (
     <>
+      <CoreAmbience />
       {!reduced && <SmoothScroll />}
       {graphics && <Graphics />}
       {!reduced && <Cursor />}

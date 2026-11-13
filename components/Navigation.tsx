@@ -1,11 +1,26 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import { profile } from "@/data/profile";
 import { lockScroll, unlockScroll } from "@/lib/scroll";
 import SocialLinks from "./SocialLinks";
 import RollingText from "./RollingText";
+import SoundToggle from "./SoundToggle";
+import {
+  activateCore,
+  getCoreState,
+  getServerCoreState,
+  subscribeCore,
+  type CorePhase,
+} from "@/lib/core-sequence";
+import { playWhoosh } from "@/lib/sound";
+
+const powerLabels: Record<Exclude<CorePhase, "idle">, string> = {
+  charging: "Powering up",
+  online: "Power down",
+  cooling: "Cooling",
+};
 
 const menuLinks = [
   { href: "/work", label: "Work", note: "05" },
@@ -31,6 +46,11 @@ export default function Navigation() {
   const opener = useRef<HTMLButtonElement | null>(null);
   const closing = useRef<ReturnType<typeof setTimeout> | null>(null);
   const path = usePathname();
+  const { phase } = useSyncExternalStore(
+    subscribeCore,
+    getCoreState,
+    getServerCoreState,
+  );
 
   useEffect(() => {
     if (closing.current) clearTimeout(closing.current);
@@ -74,6 +94,7 @@ export default function Navigation() {
     menu.style.setProperty("--menu-x", `${r.left + r.width / 2}px`);
     menu.style.setProperty("--menu-y", `${r.top + r.height / 2}px`);
     delete menu.dataset.closing;
+    playWhoosh("open");
     menu.showModal();
     setTime(localTime());
     setOpen(true);
@@ -82,6 +103,7 @@ export default function Navigation() {
   function close() {
     const menu = dialog.current;
     if (!menu?.open || menu.dataset.closing) return;
+    playWhoosh("close");
     unlockScroll("menu");
     const finish = () => {
       closing.current = null;
@@ -106,6 +128,7 @@ export default function Navigation() {
           ENGINEERING INSTINCT.
         </span>
         <nav className="desktop-nav" aria-label="Main navigation">
+          <SoundToggle />
           <Link href="/work">
             <RollingText text="Work" /> <sup>05</sup>
           </Link>
@@ -140,9 +163,27 @@ export default function Navigation() {
         data-visible={floating && !open ? "true" : undefined}
         inert={!floating || open}
       >
+        {/* Once energised, the core can be powered down from anywhere. */}
+        {phase !== "idle" && (
+          <button
+            className="float-pill float-power"
+            data-phase={phase}
+            aria-disabled={phase !== "online"}
+            aria-label={
+              phase === "online"
+                ? "The core is online. Power it down."
+                : powerLabels[phase]
+            }
+            onClick={activateCore}
+          >
+            <span className="float-power-light" aria-hidden="true" />
+            <RollingText text={powerLabels[phase]} />
+          </button>
+        )}
         <a className="float-pill float-talk" href={`mailto:${profile.email}`}>
           <RollingText text="Let’s talk" /> <span aria-hidden="true">↗</span>
         </a>
+        <SoundToggle variant="icon" className="float-pill" />
         <button
           className="float-pill float-menu"
           onClick={(e) => show(e.currentTarget)}
@@ -181,9 +222,12 @@ export default function Navigation() {
             <Link href="/" onClick={close} className="wordmark">
               sv<span>·</span>
             </Link>
-            <button className="menu-close" onClick={close}>
-              <RollingText text="Close" /> <span aria-hidden="true">×</span>
-            </button>
+            <div className="menu-actions">
+              <SoundToggle />
+              <button className="menu-close" onClick={close}>
+                <RollingText text="Close" /> <span aria-hidden="true">×</span>
+              </button>
+            </div>
           </div>
           <nav className="menu-links" aria-label="Site">
             {menuLinks.map((link, i) => (
