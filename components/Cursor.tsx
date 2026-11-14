@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef } from "react";
 import { gsap } from "gsap";
+import { getCoreState, subscribeCore } from "@/lib/core-sequence";
 
 const labels: Record<string, string> = {
   view: "View ↗",
@@ -23,6 +24,10 @@ export default function Cursor() {
       y = gsap.quickTo(el, "y", { duration: 0.45, ease: "power3.out" });
     let mode = "",
       placed = false;
+    const caption = (key: string) =>
+      key === "drag" && getCoreState().phase === "charging"
+        ? "Charging"
+        : labels[key];
     const move = (event: PointerEvent) => {
       if (event.pointerType !== "mouse") return;
       // Sit just below-right of the pointer so the arrow stays visible.
@@ -42,10 +47,18 @@ export default function Cursor() {
       if (next === mode) return;
       mode = next;
       if (labels[next]) {
-        text.textContent = labels[next];
+        text.textContent = caption(next);
         el.dataset.visible = "true";
       } else delete el.dataset.visible;
     };
+    // While the core charges, the label over it says so and a bar fills
+    // along its edge for the length of the charge (CSS, keyed on the phase).
+    const charge = () => {
+      if (getCoreState().phase === "charging") el.dataset.charging = "true";
+      else delete el.dataset.charging;
+      if (labels[mode]) text.textContent = caption(mode);
+    };
+    const unsubscribe = subscribeCore(charge);
     const hide = () => {
       placed = false;
       mode = "";
@@ -57,6 +70,8 @@ export default function Cursor() {
     window.addEventListener("blur", hide);
     return () => {
       hide();
+      unsubscribe();
+      delete el.dataset.charging;
       window.removeEventListener("pointermove", move);
       document.removeEventListener("pointerover", over);
       document.removeEventListener("pointerleave", hide);

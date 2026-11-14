@@ -7,6 +7,11 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import type { SceneProps } from "./types";
 import { CORE_IGNITION_MS } from "@/lib/motion";
 import { CORE_TIMING, getCoreState, sampleCore } from "@/lib/core-sequence";
+import { coreDive, DIVE_HEADER } from "@/lib/dive";
+
+/** How far the reactor travels toward the camera (which sits at z = 9.2):
+ * far enough that the core's face fills the frame. */
+const DIVE_DEPTH = 8.72;
 
 /**
  * An arc-reactor core with real depth: a thick housing ringed by ten
@@ -687,6 +692,19 @@ export default function HeroWorld({
     const core = getCoreState();
     const now = performance.now();
     const frame = sampleCore(core, now);
+    // Scrolling into the reactor lights it by proximity, whatever its
+    // state: by the time the camera is inside, the core is white-hot.
+    const dive = coreDive.amount;
+    if (dive > 0) {
+      const lit = THREE.MathUtils.smootherstep(dive, 0.05, 0.6);
+      frame.energy = Math.max(frame.energy, lit);
+      frame.coils = Math.max(frame.coils, lit);
+      frame.spin = Math.max(frame.spin, lit);
+      frame.flash = Math.max(
+        frame.flash,
+        THREE.MathUtils.smootherstep(dive, 0.78, 1) * 0.9,
+      );
+    }
 
     // Power-up nerves: the output stutters just before the core fires.
     let flicker = 1;
@@ -805,16 +823,32 @@ export default function HeroWorld({
     }
 
     if (!root.current || !tilt.current) return;
+    // Once the page's own colour has flooded over the dive, nothing here
+    // can be seen: draw nothing (and leave no edge pixel beside the flood).
+    const flooded = dive >= 0.999;
+    root.current.visible = !flooded;
+    if (wash.current) wash.current.visible = !flooded;
     const r = layout.section;
     const mobile = !!r && r.width < 768;
     const halfWidth = 2.99 * (r ? r.width / r.height : 1.8);
+    // With the dive on, the hero also covers the header's strip. The view
+    // is that much taller, so the reactor is scaled and lowered to sit
+    // exactly where it did in the shorter hero.
+    const inset =
+      r && !mobile && document.documentElement.dataset.dive ? DIVE_HEADER : 0;
+    const fit = r ? (r.height - inset) / r.height : 1;
+    const lower = r ? (inset / 2) * (5.98 / r.height) : 0;
+    // The dive: slide to the centre and square up, then travel at the
+    // camera until the core's face is all there is.
+    const centre = THREE.MathUtils.smootherstep(dive, 0, 0.5);
     root.current.position.set(
-      mobile ? 0 : halfWidth * 0.4 * settle,
-      (mobile ? -0.35 : 0.05) * settle,
-      0,
+      (mobile ? 0 : halfWidth * 0.4 * settle) * (1 - centre),
+      ((mobile ? -0.35 : 0.05) * settle * fit - lower) * (1 - centre),
+      dive * DIVE_DEPTH,
     );
     const scale =
       (mobile ? 0.5 : 0.84) *
+      fit *
       (1 + (1 - settle) * 0.22) *
       (1 + frame.energy * 0.03 + flash * 0.04);
     root.current.scale.setScalar(scale);
@@ -822,19 +856,21 @@ export default function HeroWorld({
     // blocks show their depth, following the pointer and any drag.
     tilt.current.rotation.x = THREE.MathUtils.damp(
       tilt.current.rotation.x,
-      0.1 -
+      (0.1 -
         pointer.y * 0.2 * settle +
         drag.current.x +
-        Math.sin(t * 0.4) * 0.03,
+        Math.sin(t * 0.4) * 0.03) *
+        (1 - centre),
       4,
       dt,
     );
     tilt.current.rotation.y = THREE.MathUtils.damp(
       tilt.current.rotation.y,
-      (mobile ? 0.25 : 0.42) +
+      ((mobile ? 0.25 : 0.42) +
         pointer.x * 0.26 * settle +
         drag.current.y +
-        Math.sin(t * 0.3) * 0.06,
+        Math.sin(t * 0.3) * 0.06) *
+        (1 - centre),
       4,
       dt,
     );

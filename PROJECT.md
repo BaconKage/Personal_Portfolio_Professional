@@ -463,6 +463,46 @@ After the pass, on the same machine: no frame over 17.4ms in any scenario.
   - The attribute changes only on the reader's click. Changing it at
     ignition too restyled the whole document (about 10ms) on the flash.
 
+### 7.18 Dive, bloom, hold, dusk and the section rail (November 2026)
+- **The dive** (`lib/dive.ts`, `choreography.ts`, `HeroWorld.tsx`,
+  `html[data-dive]` in `styles/motion.css`). Scrolling out of the hero now
+  flies through the reactor. On desktop the hero fills the viewport (it
+  slides under the header) and holds still with CSS `position: sticky` for a
+  runway of 120svh. Over that scroll its copy lifts away, the reactor slides
+  to the centre and squares up, travels at the camera until the core's face
+  fills the frame, and the core's light floods to the colour of the page
+  below. Scrolling back runs it in reverse.
+  - A sticky box is its own stacking context, so the hero sits above the
+    canvas and is transparent; its gradient moved to `.hero-backdrop`
+    beneath the canvas, and the flood is `.hero-flood` on top.
+  - The reactor is scaled and lowered by the header's height so it sits
+    exactly where it did in the shorter hero.
+  - Diving lights the core by proximity whatever its power state. Once
+    flooded, the hero scene draws nothing.
+  - Mobile and reduced motion keep the plain hero.
+- **Bloom** (`components/canvas/Bloom.ts`). While the core is lit, the
+  frame's brightest parts are blurred at two sizes and added back over the
+  hero. One framebuffer copy and five small passes; desktop only, skipped
+  at rest and when the budget is saturated.
+- **Hold to energise** (`lib/core-sequence.ts`, `CoreInteraction.tsx`). A
+  click still runs the whole sequence. A still press of more than 180ms on
+  the reactor charges it for as long as it is held: letting go early winds
+  it back down from where it was (`releaseCore`), holding through fires it.
+  The cursor label counts the charge. Mouse and pen only.
+- **Dusk** (`choreography.ts`). With the playground 60% up the screen, the
+  experience section and the page behind it turn dark with it, until
+  contact covers the view. A toggle with a CSS ease, not a scrub: text
+  colour cannot move on the compositor.
+- **Section rail** (`components/SectionRail.tsx`). A slim rail on the left
+  edge marks the section under the middle of the screen; hovering names
+  every section and each is a link. Desktop with a mouse only; it hides for
+  the hero and the pinned signal scene.
+
+Profiled after the pass (production build, 1920×1080 buffer, 60Hz): the
+dive with the core off and on, energising, mouse sweeps over the powered
+hero with bloom and trail, and the rest of the page all held 60fps with no
+frame over 17.5ms.
+
 ## 8. Bugs found and fixed
 
 | Bug | Cause | Fix |
@@ -503,6 +543,13 @@ After the pass, on the same machine: no frame over 17.4ms in any scenario.
 | How tightly motion follows scroll | `SCRUB` in `components/choreography.ts`; `lerp` in `components/SmoothScroll.tsx` |
 | Sheet flex on scroll | `SHEET_BEND` and the `2600` px/s scale in `Graphics.tsx`; channel split `0.3` in `ProjectSheet.ts` |
 | Label decode | `GLYPHS`, duration and the exclusion list in `components/choreography.ts` |
+| Dive length | `.hero-stage` height (`+ 120svh`) in `styles/motion.css` |
+| Dive choreography | The timeline positions in `choreography.ts` (copy out, `coreDive`, flood) |
+| How close the dive ends | `DIVE_DEPTH` in `HeroWorld.tsx` (camera sits at 9.2) |
+| Bloom threshold and strength | `smoothstep(0.74, 1.0, …)` and the `0.2` / `0.36` weights in `Bloom.ts` |
+| Hold delay and release speed | `180` ms in `CoreInteraction.tsx`; `releaseCore` in `lib/core-sequence.ts` |
+| When dusk falls | `start: "top 60%"` / `end: "top 40%"` in `choreography.ts`; colours under `.experience[data-tone]` |
+| Rail sections | `sections` in `components/SectionRail.tsx` |
 | Sound on by default | `DEFAULT_ON` in `lib/sound.ts` |
 | Sound levels and voices | `peak` values in `lib/sound.ts` (`playTick`, `playPress`, `playWhoosh`, `applyPhase`) |
 | Powered accent colours | `html[data-power]` rules in `styles/motion.css` |
@@ -512,9 +559,9 @@ After the pass, on the same machine: no frame over 17.4ms in any scenario.
 
 ## 10. Testing and verification
 
-**Automated:** `npm test` runs 18 tests.
+**Automated:** `npm test` runs 20 tests.
 - `content`: slugs, case studies, fallback art, the résumé rule, and attribution and pilot wording.
-- `core-sequence`: no mid-flight restarts, online persists, power-down cycle, continuous phase endpoints, and cancellation.
+- `core-sequence`: no mid-flight restarts, online persists, power-down cycle, continuous phase endpoints, cancellation, and a held charge releasing without a snap.
 - `playground-physics`.
 - `render-budget`: pixel budgets, downgrade-only with at most two changes and no oscillation, GPU classes, shedding the optional pass only under sustained load, and a 30Hz frame cap not being read as load.
 

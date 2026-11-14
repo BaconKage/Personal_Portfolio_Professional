@@ -1,6 +1,8 @@
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
+import { coreDive } from "@/lib/dive";
+import { playWhoosh } from "@/lib/sound";
 
 /**
  * Lenis already eases the scroll position. A long scrub on top of it is a
@@ -70,7 +72,64 @@ export function mountChoreography() {
   const ctx = gsap.context(() => {
     const desktop = matchMedia("(min-width: 900px)").matches;
     const hero = document.querySelector<HTMLElement>(".hero");
-    if (hero) {
+    const stage = document.querySelector<HTMLElement>(".hero-stage");
+    if (hero && stage && desktop) {
+      // The dive. The hero holds still for a runway of scroll (CSS sticky,
+      // keyed on data-dive) while its copy lifts away, the camera pushes
+      // through the reactor into the core, and the core's light floods to
+      // the colour of the page beneath. Scrolling back up runs it backwards.
+      const root = document.documentElement;
+      root.dataset.dive = "on";
+      cleanups.push(() => {
+        delete root.dataset.dive;
+        delete hero.dataset.diving;
+        coreDive.amount = 0;
+      });
+      gsap
+        .timeline({
+          defaults: { ease: "none" },
+          scrollTrigger: {
+            trigger: stage,
+            start: "top top",
+            end: "bottom bottom",
+            scrub: SCRUB,
+            invalidateOnRefresh: true,
+            onUpdate: (self) => {
+              const diving = self.progress > 0.1;
+              if (diving === (hero.dataset.diving === "true")) return;
+              if (diving) {
+                hero.dataset.diving = "true";
+                if (self.direction > 0) playWhoosh("travel");
+              } else delete hero.dataset.diving;
+            },
+          },
+        })
+        .to(
+          ".hero h1",
+          {
+            yPercent: -35,
+            opacity: 0,
+            scale: 0.88,
+            transformOrigin: "left top",
+            duration: 0.24,
+          },
+          0,
+        )
+        .to(
+          ".hero-topline,.hero-bottom,.hero-foot,.hero > .neural-prompt",
+          { y: -40, opacity: 0, duration: 0.2, stagger: 0.012 },
+          0.02,
+        )
+        .to(".hero-core-surface", { opacity: 0, duration: 0.1 }, 0.04)
+        // Perspective does the accelerating: the nearer the core, the
+        // faster it grows.
+        .to(coreDive, { amount: 1, ease: "power1.in", duration: 0.86 }, 0.06)
+        .to(
+          ".hero-flood",
+          { opacity: 1, ease: "power2.in", duration: 0.26 },
+          0.74,
+        );
+    } else if (hero) {
       // CoreIgnition owns first-visit entry; scrolling owns only the exit.
       const exit = gsap.timeline({
         scrollTrigger: {
@@ -348,6 +407,28 @@ export function mountChoreography() {
           delete el.dataset.drawn;
         });
       });
+    // Dusk: with the playground half-way up the screen, the experience
+    // section and the page behind it turn dark with it, until contact (its
+    // own blue) has covered the view again. Toggled, not scrubbed: text
+    // colour cannot move on the compositor, so it eases once in CSS.
+    const experience = document.querySelector<HTMLElement>(".experience");
+    const playground = document.querySelector<HTMLElement>(".playground");
+    const contact = document.querySelector<HTMLElement>(".contact");
+    if (experience && playground && contact) {
+      const dusk = (on: boolean) => {
+        if (on) experience.dataset.tone = "dark";
+        else delete experience.dataset.tone;
+        document.body.style.backgroundColor = on ? "#070c17" : "";
+      };
+      ScrollTrigger.create({
+        trigger: playground,
+        start: "top 60%",
+        endTrigger: contact,
+        end: "top 40%",
+        onToggle: (self) => dusk(self.isActive),
+      });
+      cleanups.push(() => dusk(false));
+    }
     document.querySelectorAll(".experience-row").forEach((el) => {
       gsap.from(el.children, {
         y: 35,

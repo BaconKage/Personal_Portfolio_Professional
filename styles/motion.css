@@ -1003,3 +1003,215 @@ html[data-power]
 html[data-power] .next-page-arrow {
   color: #5fd4ff;
 }
+
+/* ─── Cursor label counts the charge ─── */
+.cursor-label > span {
+  position: relative;
+  overflow: hidden;
+}
+.cursor-label[data-charging] > span::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 3px;
+  background: #fff;
+  transform-origin: 0 50%;
+  animation: cursor-charge 2.6s linear both;
+}
+@keyframes cursor-charge {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+/* ─── Section rail: where you are on the page, and a way to jump ─── */
+.section-rail {
+  position: fixed;
+  z-index: 46;
+  left: max(10px, calc(var(--gutter) / 2 - 15px));
+  top: 50%;
+  display: none;
+  flex-direction: column;
+  padding: 10px 0;
+  border-radius: 16px;
+  background: #0d1220;
+  border: 1px solid #ffffff1f;
+  box-shadow: 0 8px 30px #06091826;
+  translate: 0 -50%;
+  opacity: 0;
+  transform: translateX(-140%);
+  transition:
+    transform 0.6s cubic-bezier(0.76, 0, 0.24, 1),
+    opacity 0.4s ease;
+}
+.section-rail[data-visible="true"] {
+  opacity: 1;
+  transform: none;
+}
+.section-rail a {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 30px;
+  height: 22px;
+  padding: 0 8px;
+}
+.rail-tick {
+  width: 8px;
+  height: 2px;
+  border-radius: 1px;
+  background: #8a9cc2;
+  transform-origin: 0 50%;
+  transition:
+    transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 0.3s;
+}
+.section-rail a:is(:hover, :focus-visible) .rail-tick {
+  background: #fff;
+  transform: scaleX(1.4);
+}
+.section-rail a[aria-current="true"] .rail-tick {
+  background: #5d7dff;
+  transform: scaleX(1.75);
+}
+html[data-power] .section-rail a[aria-current="true"] .rail-tick {
+  background: #5fd4ff;
+}
+.rail-label {
+  position: absolute;
+  left: calc(100% + 8px);
+  top: 50%;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #0d1220;
+  color: #eef2ff;
+  font:
+    11px/1 var(--font-mono),
+    monospace;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  translate: 0 -50%;
+  opacity: 0;
+  transform: translateX(-6px);
+  pointer-events: none;
+  transition:
+    opacity 0.25s ease,
+    transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.section-rail:is(:hover, :focus-within) .rail-label {
+  opacity: 1;
+  transform: none;
+}
+.section-rail a[aria-current="true"] .rail-label {
+  background: #244cff;
+}
+.section-rail a:focus-visible {
+  outline-offset: 2px;
+}
+@media (min-width: 1024px) and (hover: hover) and (pointer: fine) {
+  .section-rail {
+    display: flex;
+  }
+}
+
+/* ─── Dusk: the page turns dark with the section that is arriving ─── */
+/* choreography sets data-tone on the experience section, and the body's
+   colour, once the playground is half-way up the screen: the edge between
+   cream and navy dissolves instead of scrolling past as a line. */
+body {
+  transition: background-color 0.7s ease;
+}
+.experience,
+.experience :is(h2, h3, p, span) {
+  transition: color 0.7s ease;
+}
+.experience .rule-draw::before {
+  transition:
+    transform 1.3s cubic-bezier(0.76, 0, 0.24, 1),
+    background-color 0.7s ease;
+}
+.experience[data-tone="dark"] {
+  --line: #273249;
+  --muted: #8a9cc2;
+  color: #ecf1ff;
+}
+.experience[data-tone="dark"] .experience-row p {
+  color: #b9c6e2;
+}
+
+/* ─── The dive: scrolling out of the hero flies through the core ─── */
+/* choreography sets html[data-dive] (desktop, motion on). The hero then
+   fills the whole viewport, sliding under the header, and holds still
+   (sticky) for a runway of scroll while the camera pushes into the reactor
+   and the core's light floods to the colour of the page below.
+   A sticky box is its own stacking context, so the hero sits above the
+   canvas and is transparent; its backdrop is a separate layer beneath. */
+.hero-backdrop,
+.hero-flood {
+  display: none;
+}
+html[data-dive] .hero-stage {
+  position: relative;
+  height: calc(max(100svh, 794px) + 120svh);
+  margin-top: -104px;
+  background: #060b18;
+}
+html[data-dive] .hero-backdrop {
+  display: block;
+  position: sticky;
+  /* A hero taller than a short window holds with its foot in view. */
+  top: min(0px, calc(100svh - 794px));
+  height: 100svh;
+  min-height: 794px;
+  background: radial-gradient(
+    ellipse at 72% 47%,
+    #172b59 0%,
+    #0a1229 34%,
+    #060b18 68%
+  );
+}
+html[data-dive] .hero {
+  position: sticky;
+  top: min(0px, calc(100svh - 794px));
+  z-index: 2;
+  height: 100svh;
+  min-height: 794px;
+  margin-top: min(-100svh, -794px);
+  padding-top: 138px;
+  background: transparent;
+}
+html[data-dive] .hero .hero-art {
+  background: none;
+}
+html[data-dive] .hero-flood {
+  display: block;
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  background: var(--paper);
+  opacity: 0;
+  pointer-events: none;
+  will-change: opacity;
+}
+/* Once the dive is under way the hero is scenery, not a control surface. */
+html[data-dive] .hero[data-diving="true"] :is(a, button, .hero-core-surface) {
+  pointer-events: none;
+}
+html[data-dive]
+  :is(
+    .hero-topline,
+    .hero-bottom,
+    .hero-foot,
+    .hero > .neural-prompt,
+    .hero-core-surface
+  ) {
+  will-change: transform, opacity;
+}
+/* The intro's fade-in of the hero's atmosphere moves to the backdrop. */
+html[data-dive] .hero-stage:has(.hero[data-ignition="waiting"]) .hero-backdrop {
+  opacity: 0.08;
+}
+html[data-dive] .hero-stage:has(.hero[data-ignition="running"]) .hero-backdrop {
+  animation: ignition-atmosphere 3200ms ease-in-out both;
+}

@@ -13,6 +13,7 @@ import Preloader from "@/components/Preloader";
 import NextPage from "@/components/NextPage";
 import SocialLinks from "@/components/SocialLinks";
 import Artwork from "@/components/Artwork";
+import SectionRail from "@/components/SectionRail";
 import { profile, research } from "@/data/profile";
 
 const featured = [
@@ -71,7 +72,11 @@ export default function Home() {
   return (
     <main id="main">
       <Preloader />
-      <section className="hero">
+      <SectionRail />
+      {/* The stage gives the hero a runway of scroll for the dive. */}
+      <div className="hero-stage">
+        <div className="hero-backdrop" aria-hidden="true" />
+        <section className="hero">
         <div className="hero-topline">
           <p className="hero-name">Shubhang <span>Srinivas Varda</span></p>
           <span className="eyebrow location">
@@ -118,7 +123,9 @@ export default function Home() {
           <SocialLinks />
           <CoreIgnition />
         </div>
-      </section>
+        <div className="hero-flood" aria-hidden="true" />
+        </section>
+      </div>
       <section
         className="selected"
         id="selected-work"
@@ -245,7 +252,7 @@ export default function Home() {
           </div>
         </div>
       </section>
-      <section className="experience section-pad">
+      <section className="experience section-pad" id="experience">
         <div className="section-heading compact">
           <span className="eyebrow">04 / IN PRACTICE</span>
           <h2>Experience.</h2>

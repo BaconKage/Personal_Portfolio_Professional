@@ -39,6 +39,8 @@ type Hum = {
   presence: GainNode;
 };
 let hum: Hum | null = null;
+/** The riser voices of a charge in progress, so a released charge can cut them. */
+let chargeVoices: GainNode[] = [];
 
 export const getSoundEnabled = () => enabled;
 export const getServerSoundEnabled = () => false;
@@ -149,6 +151,7 @@ function blip(
   }
   osc.start(t);
   osc.stop(t + attack + decay + 0.05);
+  return gain;
 }
 
 /** Filtered noise sweeping between two frequencies: air moving. */
@@ -197,6 +200,7 @@ function sweep(
   }
   source.start(t, Math.random());
   source.stop(t + attack + decay + 0.05);
+  return gain;
 }
 
 /** A light tick as the pointer reaches something interactive. */
@@ -290,6 +294,14 @@ function applyPhase(previous: CorePhase) {
   const c = live();
   if (!c) return;
   const t = c.currentTime;
+  // Let go before it fired: the risers stop climbing.
+  const released = previous === "charging" && phase !== "online";
+  if (released)
+    for (const voice of chargeVoices) {
+      hold(voice.gain, t);
+      voice.gain.setTargetAtTime(0.0001, t, 0.04);
+    }
+  chargeVoices = [];
   if (phase === "idle") {
     releaseHum(c, 0.2);
     return;
@@ -326,23 +338,25 @@ function applyPhase(previous: CorePhase) {
       h.stutter.gain.setValueAtTime(1, dip + 0.045);
     }
     // A rising tone and rising air over the hum, cut just before ignition.
-    blip(c, {
+    chargeVoices = [
+      blip(c, {
       from: 196,
       to: 784,
       peak: 0.03,
       attack: CHARGE_SECONDS - 0.1,
       decay: 0.08,
-      glide: CHARGE_SECONDS,
-      wet: 0.6,
-    });
-    sweep(c, {
-      from: 500,
-      to: 5200,
-      peak: 0.045,
-      attack: CHARGE_SECONDS - 0.08,
-      decay: 0.06,
-      q: 1.4,
-    });
+        glide: CHARGE_SECONDS,
+        wet: 0.6,
+      }),
+      sweep(c, {
+        from: 500,
+        to: 5200,
+        peak: 0.045,
+        attack: CHARGE_SECONDS - 0.08,
+        decay: 0.06,
+        q: 1.4,
+      }),
+    ];
     return;
   }
 
@@ -384,21 +398,24 @@ function applyPhase(previous: CorePhase) {
     return;
   }
 
-  // Cooling: everything winds down to nothing.
-  const end = t + COOL_SECONDS;
+  // Cooling: everything winds down to nothing. A released charge has less
+  // to lose, so it goes quickly and without the power-down voices.
+  const end = t + (released ? 0.7 : COOL_SECONDS);
   for (const osc of [h.a, h.b])
     osc.frequency.exponentialRampToValueAtTime(34, end);
   h.filter.frequency.exponentialRampToValueAtTime(110, end);
   h.level.gain.exponentialRampToValueAtTime(0.0001, end);
-  blip(c, {
-    from: 392,
-    to: 98,
-    peak: 0.028,
-    attack: 0.05,
-    decay: 1.5,
-    wet: 0.7,
-  });
-  sweep(c, { from: 1800, to: 200, peak: 0.04, attack: 0.1, decay: 1.4 });
+  if (!released) {
+    blip(c, {
+      from: 392,
+      to: 98,
+      peak: 0.028,
+      attack: 0.05,
+      decay: 1.5,
+      wet: 0.7,
+    });
+    sweep(c, { from: 1800, to: 200, peak: 0.04, attack: 0.1, decay: 1.4 });
+  }
   h.a.stop(end + 0.3);
   h.b.stop(end + 0.3);
   hum = null;

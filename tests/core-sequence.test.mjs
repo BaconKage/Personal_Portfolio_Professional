@@ -96,3 +96,38 @@ test("Replay, reduced motion, or unmount can cancel any phase without delayed re
     assert.equal(core.getCoreState().phase, "idle");
   }
 });
+
+test("A held charge can be released: it winds down from where it was, without a snap", () => {
+  const core = sequence();
+  core.chargeCore();
+  core.advance(1300);
+  const before = core.sampleCore(core.getCoreState(), 1300);
+  core.releaseCore();
+  const released = core.getCoreState();
+  assert.equal(released.phase, "cooling");
+  const after = core.sampleCore(released, 1300);
+  for (const key of Object.keys(before))
+    assert.ok(Math.abs(before[key] - after[key]) < 1e-10, `release: ${key}`);
+  assert.ok(released.duration < 1800, "Less charge takes less time to lose");
+  core.advance(released.duration + 1);
+  assert.equal(core.getCoreState().phase, "idle");
+  assert.deepEqual(
+    { ...core.sampleCore(core.getCoreState(), 99999) },
+    { energy: 0, coils: 0, spin: 0, flash: 0 },
+  );
+});
+test("Holding only charges from rest, and a completed hold stays on when let go", () => {
+  const core = sequence();
+  core.chargeCore();
+  core.advance(2600);
+  assert.equal(core.getCoreState().phase, "online");
+  core.releaseCore();
+  assert.equal(core.getCoreState().phase, "online", "Letting go after ignition keeps it on");
+  core.chargeCore();
+  assert.equal(core.getCoreState().phase, "online", "A hold never powers down");
+  core.activateCore();
+  core.advance(900);
+  core.chargeCore();
+  assert.equal(core.getCoreState().phase, "cooling", "A hold cannot interrupt cooling");
+  core.resetCore();
+});

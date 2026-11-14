@@ -23,6 +23,8 @@ import { createScreenPaint } from "./ScreenPaint";
 import { createProjectSheet, type ProjectSheet } from "./ProjectSheet";
 import { projectZoom } from "@/lib/zoom";
 import { getCoreState, sampleCore } from "@/lib/core-sequence";
+import { createBloom } from "./Bloom";
+import { coreDive } from "@/lib/dive";
 
 const loaders = {
   portal: () => import("./PortalWorld"),
@@ -237,6 +239,14 @@ function Renderer({
     return createScreenPaint(gl);
   }, [gl]);
   useEffect(() => () => paint?.dispose(), [paint]);
+  // Light from the reactor bleeds past its edges while the core is lit.
+  // Desktop only: it costs a framebuffer copy every frame it runs.
+  const bloom = useMemo(() => {
+    if (!matchMedia("(pointer: fine)").matches) return null;
+    if (!gl.capabilities.isWebGL2) return null;
+    return createBloom(gl);
+  }, [gl]);
+  useEffect(() => () => bloom?.dispose(), [bloom]);
   const brush = useRef({
     x: 0,
     y: 0,
@@ -779,6 +789,27 @@ function Renderer({
       gl.clearDepth();
       try {
         gl.render(s.scene, s.camera);
+        if (bloom && s.id === "hero" && !budget.saturated) {
+          // As bright as the core is, or as close as the dive has come.
+          // Nothing once the page's colour has flooded over it.
+          const dive = coreDive.amount;
+          const lit =
+            dive >= 0.999
+              ? 0
+              : Math.max(power, THREE.MathUtils.smootherstep(dive, 0.05, 0.6));
+          if (lit > 0.02)
+            bloom.render(
+              state.size.width,
+              height,
+              {
+                x: left,
+                y: height - bottom,
+                width: right - left,
+                height: bottom - top,
+              },
+              lit,
+            );
+        }
         if (s.element.dataset.ready !== "true")
           s.element.dataset.ready = "true";
       } catch {

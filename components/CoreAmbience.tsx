@@ -85,15 +85,18 @@ export default function CoreAmbience() {
   // The hum is loudest beside the reactor and recedes down the page; on
   // pages without the hero it stays a distant presence.
   useEffect(() => {
-    const hero = document.querySelector<HTMLElement>(".hero");
-    if (!hero) {
+    const stage = document.querySelector<HTMLElement>(".hero-stage");
+    if (!stage) {
       setCorePresence(0.3);
       return;
     }
     let frame = 0;
     const update = () => {
       frame = 0;
-      const seen = 1 - Math.min(1, window.scrollY / Math.max(1, innerHeight));
+      // Near for as long as the hero holds the screen (the dive included),
+      // then receding as it scrolls away.
+      const bottom = stage.offsetTop + stage.offsetHeight - window.scrollY;
+      const seen = Math.max(0, Math.min(1, bottom / Math.max(1, innerHeight)));
       setCorePresence(0.3 + 0.7 * seen);
     };
     const scroll = () => {

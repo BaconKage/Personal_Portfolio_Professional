@@ -2,8 +2,10 @@
 import { useEffect, useRef, useSyncExternalStore } from "react";
 import {
   activateCore,
+  chargeCore,
   getCoreState,
   getServerCoreState,
+  releaseCore,
   resetCore,
   subscribeCore,
   type CorePhase,
@@ -40,14 +42,17 @@ export default function NeuralPrompt() {
     const unavailable = () =>
       document.documentElement.dataset.motion === "reduced" ||
       !!document.documentElement.dataset.graphicsFallback;
+    const ready = () =>
+      !unavailable() &&
+      hero.dataset.ignition === "complete" &&
+      hero.querySelector<HTMLElement>(".hero-art")?.dataset.ready === "true";
     const fire = () => {
-      if (
-        unavailable() ||
-        hero.dataset.ignition !== "complete" ||
-        hero.querySelector<HTMLElement>(".hero-art")?.dataset.ready !== "true"
-      )
-        return;
-      activateCore();
+      if (ready()) activateCore();
+    };
+    // Press and hold on the reactor: it charges while held, and winds back
+    // down if let go before it fires.
+    const hold = () => {
+      if (ready()) chargeCore();
     };
     const preference = () => {
       if (unavailable()) resetCore();
@@ -58,9 +63,13 @@ export default function NeuralPrompt() {
       attributeFilter: ["data-motion", "data-graphics-fallback"],
     });
     window.addEventListener("neural-signal", fire);
+    window.addEventListener("neural-hold", hold);
+    window.addEventListener("neural-release", releaseCore);
     return () => {
       observer.disconnect();
       window.removeEventListener("neural-signal", fire);
+      window.removeEventListener("neural-hold", hold);
+      window.removeEventListener("neural-release", releaseCore);
       unsubscribe();
       // The core keeps its state across pages (see CoreAmbience): leaving
       // the hero does not power it down.
