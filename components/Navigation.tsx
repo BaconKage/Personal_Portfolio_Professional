@@ -123,9 +123,9 @@ export default function Navigation() {
           sv<span>·</span>
         </Link>
         <span className="nav-role">
-          INDEPENDENT MIND.
+          FULL-STACK & AI ENGINEER
           <br />
-          ENGINEERING INSTINCT.
+          BENGALURU, INDIA
         </span>
         <nav className="desktop-nav" aria-label="Main navigation">
           <SoundToggle />

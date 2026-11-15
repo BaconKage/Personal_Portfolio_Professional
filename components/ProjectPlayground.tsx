@@ -180,7 +180,7 @@ export default function ProjectPlayground({
     >
       <header className="playground-header">
         <div>
-          <span className="eyebrow">05 / THE PLAYGROUND</span>
+          <span className="eyebrow">05 / PLAYGROUND</span>
           <h2 id="playground-title">
             Go on.
             <br />
@@ -188,9 +188,9 @@ export default function ProjectPlayground({
           </h2>
         </div>
         <p>
-          Five projects. A little room to play.
+          Each object here is one of my projects.
           <br />
-          Find the one that pulls you in.
+          Drag them around, or pick one to read about it.
         </p>
       </header>
       <div className="playground-layout">
@@ -293,10 +293,10 @@ export default function ProjectPlayground({
           <div className="playground-stage-footer">
             <span className="playground-instruction">
               <span className="playground-desktop-hint">
-                Drag to play · Select to discover
+                Drag to move · Click to select
               </span>
               <span className="playground-touch-hint">
-                Tap an object to discover
+                Tap an object to select it
               </span>
             </span>
             <button
@@ -320,16 +320,16 @@ export default function ProjectPlayground({
                 current.title
               ) : (
                 <>
-                  Different shapes.
+                  Nothing selected
                   <br />
-                  The same curiosity.
+                  yet.
                 </>
               )}
             </h3>
             <p>
               {current
                 ? current.summary
-                : "Every object has a story. Select one to see what it does, how it works, and what went into building it."}
+                : "Select an object, or a name from the list, to see what the project is and open its write-up."}
             </p>
             {current ? (
               <Link
@@ -367,7 +367,7 @@ export default function ProjectPlayground({
         </aside>
       </div>
       <div className="playground-footnote">
-        <p>Original objects. Real projects.</p>
+        <p>The objects are made up. The projects are real.</p>
         <a href="#contact">Have something in mind? Let’s talk ↗</a>
       </div>
       <p id="playground-help" className="sr-only">

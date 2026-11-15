@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import NextPage from "@/components/NextPage";
 import SceneControls from "@/components/SceneControls";
 import SystemDiagram from "@/components/SystemDiagram";
+import ProductShots from "@/components/ProductShots";
 import { projects, getProject } from "@/data/projects";
 export function generateStaticParams() {
   return projects.map((p) => ({ slug: p.slug }));
@@ -93,8 +94,9 @@ export default async function CaseStudy({
             </a>
           )}
         </section>
+        <ProductShots project={p} />
         <section className="case-context">
-          <span className="eyebrow">01 / THE CONTEXT</span>
+          <span className="eyebrow">01 / BACKGROUND</span>
           <div>
             <h2>
               {p.hook.split("\n").map((line, i) => (
@@ -111,7 +113,7 @@ export default async function CaseStudy({
         </section>
         <section className="case-system">
           <div className="sticky-system">
-            <span className="eyebrow">02 / INSIDE THE SYSTEM</span>
+            <span className="eyebrow">02 / HOW IT WORKS</span>
             <SystemDiagram {...p.diagram} />
             <div className="stack-list">
               {p.stack.map((s) => (
@@ -130,33 +132,33 @@ export default async function CaseStudy({
           </div>
         </section>
         <section className="case-context contribution">
-          <span className="eyebrow">03 / MY CONTRIBUTION</span>
+          <span className="eyebrow">03 / MY PART</span>
           <div>
-            <h2>Where I came in.</h2>
+            <h2>What I worked on.</h2>
             <p>{p.contribution}</p>
             {p.slug === "mygym" && (
               <p className="context-note">
-                Earlier MyGym work used React, Flutter, Flask, and MongoDB. That
-                work is distinct from the current platform architecture
-                described above.{" "}
+                The earlier version of MyGym was built on React, Flutter, Flask
+                and MongoDB. That’s separate from the platform described
+                above.{" "}
                 <Link href="/work/posture-engine">
-                  Explore the posture and diet-planning work ↗
+                  See the posture and diet-planning work ↗
                 </Link>
               </p>
             )}
           </div>
         </section>
         <section className="case-context">
-          <span className="eyebrow">04 / THE CHALLENGE</span>
+          <span className="eyebrow">04 / THE HARD PART</span>
           <div>
-            <h2>The useful complications.</h2>
+            <h2>What made it difficult.</h2>
             <p>{p.challenge}</p>
           </div>
         </section>
         <section className="case-context result">
-          <span className="eyebrow">05 / WHERE IT STANDS</span>
+          <span className="eyebrow">05 / STATUS</span>
           <div>
-            <h2>The current state.</h2>
+            <h2>Where it is now.</h2>
             <p>{p.result}</p>
             {p.link && (
               <a
@@ -177,7 +179,7 @@ export default async function CaseStudy({
           <div className="next-art">
             <Artwork scene={next.slug} />
           </div>
-          <span className="eyebrow">KEEP EXPLORING / NEXT PROJECT</span>
+          <span className="eyebrow">NEXT PROJECT</span>
           <h2>
             {next.title}
             <span>↗</span>

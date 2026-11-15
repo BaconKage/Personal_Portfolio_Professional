@@ -20,9 +20,9 @@ const featured = [
   {
     slug: "mygym",
     name: "MyGym",
-    category: "THE GYM. CONNECTED.",
+    category: "WEB APP · MOBILE APP · ONE API",
     description:
-      "One member. One journey. One system for everything in between.",
+      "Runs a gym’s member journey from first enquiry to coaching. Built in a team of three.",
     number: "01",
     tag: "FULL-STACK PLATFORM",
     year: "2026",
@@ -30,9 +30,9 @@ const featured = [
   {
     slug: "vanicert",
     name: "VaniCert",
-    category: "LISTEN BEYOND THE VOICE.",
+    category: "VOICE DEEPFAKE DETECTION",
     description:
-      "Exploring voice authenticity through neural analysis and signal processing.",
+      "Checks whether a voice recording is real or AI-generated. It’s live, so you can try it.",
     number: "02",
     tag: "APPLIED AI · AUDIO",
     year: "",
@@ -40,9 +40,9 @@ const featured = [
   {
     slug: "firstdrop-ai",
     name: "FirstDropAI",
-    category: "PRACTICE THE HUMAN PART.",
+    category: "CLINICAL COMMUNICATION SIMULATOR",
     description:
-      "A place for doctors to rehearse the conversations that matter.",
+      "Trainee doctors practise hard conversations with AI patients and families. I built it solo, and it’s live.",
     number: "03",
     tag: "CONVERSATIONAL AI",
     year: "2026",
@@ -50,9 +50,9 @@ const featured = [
   {
     slug: "bhashabuddy",
     name: "BhashaBuddy",
-    category: "A LITTLE CLOSER TO HOME.",
+    category: "MOTHER-TONGUE LEARNING APP",
     description:
-      "Stories, speech, and play. A connection to the language of your family.",
+      "Helps children growing up abroad practise the language their family speaks.",
     number: "04",
     tag: "LANGUAGE · LEARNING",
     year: "",
@@ -64,7 +64,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Shubhang Srinivas Varda — Full-Stack & AI Engineer",
     description:
-      "Full-stack products, applied AI, and thoughtful digital experiences.",
+      "Full-stack and AI engineer in Bengaluru. Projects, research and contact.",
     url: "/",
   },
 };
@@ -103,11 +103,11 @@ export default function Home() {
         <CoreInteraction />
         <div className="hero-bottom">
           <p>
-            Full-Stack & AI Engineer.
+            Full-stack and AI engineer.
             <br />
             <span>
-              From complex problems
-              <br className="mobile-br" /> to things people use.
+              I build web and mobile products,
+              <br className="mobile-br" /> and the AI features inside them.
             </span>
           </p>
           <a
@@ -132,14 +132,14 @@ export default function Home() {
         aria-labelledby="work-heading"
       >
         <div className="section-heading">
-          <span className="eyebrow">01 / SELECTED WORK</span>
+          <span className="eyebrow">01 / WORK</span>
           <h2 id="work-heading">
-            Ideas, made real<span>.</span>
+            Things I’ve built<span>.</span>
           </h2>
           <p>
-            Different problems.
+            Three of these are live to try.
             <br />
-            The same instinct to build.
+            Each one opens a full write-up.
           </p>
         </div>
         {featured.map((p) => (
@@ -178,29 +178,31 @@ export default function Home() {
           </article>
         ))}
         <Link className="all-work" href="/work">
-          <span>There’s more to the story.</span>
+          <span>One more project, and the full list.</span>
           <span>
             <RollingText text="All work" /> <sup>05</sup> ↗
           </span>
         </Link>
       </section>
       <section className="about section-pad" id="about">
-        <div className="discipline-band" aria-hidden="true"><div>ENGINEERING · INTELLIGENCE · INTERACTION ·</div><div>IDEAS INTO SYSTEMS · SYSTEMS INTO IMPACT ·</div></div>
-        <span className="eyebrow">02 / THE PERSON BEHIND THE SYSTEMS</span>
+        <div className="discipline-band" aria-hidden="true"><div>NEXT.JS · REACT NATIVE · NESTJS · POSTGRESQL ·</div><div>FASTAPI · MEDIAPIPE · OPENCV · LLM APIS ·</div></div>
+        <span className="eyebrow">02 / ABOUT</span>
         <div className="about-main">
           <h2>
-            Curious by nature.
+            Hi, I’m Shubhang.
             <br />
-            Engineer by <em>instinct.</em>
+            I’m a developer in <em>Bengaluru.</em>
           </h2>
           <div className="about-copy">
             <p>
-              <ReadingText text="I’m Shubhang. I work where applied AI meets the everyday reality of building software: the data, the interface, and the things that can go wrong between them." />
+              <ReadingText text="I’m finishing a B.Tech in computer science at RV University, and I’ve been working as a developer alongside it since March 2025." />
             </p>
             <p>
-              That takes me from gym operations to clinical conversations, voice
-              analysis, and language learning. Different domains. A shared
-              interest in making complex systems useful.
+              Most of what I build is full-stack: a web or mobile app, the API
+              behind it, and the database under that. More and more of it has a
+              model somewhere in the middle. So far that’s meant gym
+              software, a simulator for trainee doctors, a voice deepfake
+              detector and a language app for kids.
             </p>
             <p className="small-copy">
               B.Tech CSE · Data Science & Engineering
@@ -210,16 +212,16 @@ export default function Home() {
           </div>
         </div>
         <div className="personal-line">
-          <span className="eyebrow">AWAY FROM THE EDITOR</span>
+          <span className="eyebrow">OUTSIDE WORK</span>
           <p>
-            Founder of RV University’s Model UN Society. A room full of
-            different perspectives is a good place to learn how to defend a
-            decision.
+            I founded RV University’s Model UN Society. A room full of
+            people who disagree with you is a good place to learn how to defend
+            a decision.
           </p>
         </div>
       </section>
       <section className="research section-pad" id="research">
-        <span className="eyebrow">03 / THINKING BEYOND THE BUILD</span>
+        <span className="eyebrow">03 / RESEARCH</span>
         <div className="research-grid">
           <div>
             <span className="research-mark">∴</span>
@@ -231,15 +233,15 @@ export default function Home() {
           </div>
           <div>
             <h2>
-              What if imperfection
+              I co-wrote a paper on
               <br />
-              is part of the system?
+              why AI is never perfect.
             </h2>
             <p className="paper-title">{research.title}</p>
             <p>
-              Our paper examines AI’s limitations through complexity, ethics,
-              and governance. It informs how I think about building systems that
-              remain useful without pretending to be infallible.
+              Joshua Sanctus and I look at AI’s limitations through
+              complexity, ethics and governance. It shapes how I build. I want
+              a system to stay useful without pretending it’s never wrong.
             </p>
             <a
               className="text-link"
@@ -254,8 +256,8 @@ export default function Home() {
       </section>
       <section className="experience section-pad" id="experience">
         <div className="section-heading compact">
-          <span className="eyebrow">04 / IN PRACTICE</span>
-          <h2>Experience.</h2>
+          <span className="eyebrow">04 / EXPERIENCE</span>
+          <h2>Where I’ve worked.</h2>
         </div>
         <div className="experience-row">
           <span className="eyebrow">JUN 2026 — PRESENT</span>
@@ -264,8 +266,9 @@ export default function Home() {
             <span>Technology Consultant</span>
           </div>
           <p>
-            Scenario generation, conversational simulation, voice interaction,
-            and feedback reports for clinical communication training.
+            I built HealthCareSim, a simulator where trainee doctors practise
+            difficult conversations by voice and get a feedback report at the
+            end.
           </p>
         </div>
         <div className="experience-row">
@@ -275,12 +278,13 @@ export default function Home() {
             <span>Full-Stack Developer</span>
           </div>
           <p>
-            Gym software, member and trainer workspaces, computer vision for
-            workout validation, and AI-assisted diet planning.
+            This is the company behind MyGym. I build the member and trainer
+            dashboards, computer vision that checks workout form, and an AI
+            diet planner.
           </p>
         </div>
         <div className="recognition">
-          <span className="eyebrow">ALSO ALONG THE WAY</span>
+          <span className="eyebrow">AWARDS & COURSES</span>
           <p>
             INNOVATEX ’26 · 2nd place
             <br />
@@ -302,15 +306,15 @@ export default function Home() {
       <SignalJourney />
       <section className="contact section-pad" id="contact">
         <span className="eyebrow">
-          <i /> OPEN TO GOOD CONVERSATIONS
+          <i /> GET IN TOUCH
         </span>
         <h2>
-          Let’s build
+          Want to
           <br />
-          something
+          work together?
           <br />
           <a href={`mailto:${profile.email}`}>
-            <KineticText text="worth using." /><span className="contact-arrow">↗</span>
+            <KineticText text="Email me." /><span className="contact-arrow">↗</span>
           </a>
         </h2>
         <div className="contact-bottom">
@@ -320,12 +324,12 @@ export default function Home() {
       </section>
       <footer className="footer">
         <span>© {new Date().getFullYear()} SHUBHANG SRINIVAS VARDA</span>
-        <span>DESIGNED & ENGINEERED WITH INTENT.</span>
+        <span>BUILT WITH NEXT.JS, THREE.JS & GSAP.</span>
         <a href="#main">
           <RollingText text="BACK TO TOP" /> ↑
         </a>
       </footer>
-      <NextPage href="/work" eyebrow="THERE’S MORE TO THE STORY" title="All work" />
+      <NextPage href="/work" eyebrow="NEXT" title="All work" />
     </main>
   );
 }

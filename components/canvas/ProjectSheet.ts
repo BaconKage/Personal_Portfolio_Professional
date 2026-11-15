@@ -10,6 +10,11 @@ import type { SceneId } from "@/components/Artwork";
  *
  * Once landed it stays a sheet: scroll speed bows it (the middle trails the
  * edges) and pulls its colour channels apart, then it springs back flat.
+ *
+ * Clicked, it opens: from the point of the click it bursts outward until it
+ * is the whole viewport. Vertices near the click leave first and the far
+ * edges catch up, so it bends as it grows, swells toward the viewer in
+ * mid-flight, and squares off as it arrives.
  */
 
 type Background = {
@@ -59,9 +64,12 @@ uniform vec2 u_domWH;
 uniform vec2 u_viewport;
 uniform float u_showRatio;
 uniform float u_bend;
+uniform float u_expand;
+uniform vec2 u_origin;
 varying vec2 v_uv;
 varying vec2 v_domWH;
 varying float v_showRatio;
+varying float v_expand;
 void main() {
   // p: 0..1 across the card, y pointing down like the DOM.
   vec2 p = vec2(position.x + 0.5, 0.5 - position.y);
@@ -80,6 +88,26 @@ void main() {
   vec2 screen = base + pivot + domXY;
   // Scroll speed bows the sheet: held by its sides, the middle lags behind.
   screen.y -= u_bend * sin(p.x * 3.14159265);
+  v_expand = 0.0;
+  if (u_expand > 0.0) {
+    // Opening: each vertex sets off once the burst from the click reaches
+    // it, so the sheet is pulled out by one point and its edges trail.
+    float reach = distance(p * u_domWH, u_origin * u_domWH) / length(u_domWH);
+    float e = smoothstep(reach * 0.5, 0.5 + reach * 0.5, u_expand);
+    vec2 centre = u_viewport * 0.5;
+    screen = mix(screen, p * u_viewport, e);
+    // It swells past the frame in mid-flight, as if lifting off the page,
+    // and rolls a little toward the side it was pulled from.
+    screen += (screen - centre) * sin(e * 3.14159265) * 0.06;
+    float roll = sin(u_expand * 3.14159265) * 0.03 * (u_origin.x < 0.5 ? 1.0 : -1.0);
+    vec2 arm = screen - centre;
+    screen = centre + vec2(
+      cos(roll) * arm.x - sin(roll) * arm.y,
+      sin(roll) * arm.x + cos(roll) * arm.y
+    );
+    domWH = mix(domWH, u_viewport, e);
+    v_expand = e;
+  }
   gl_Position = vec4(
     screen.x / u_viewport.x * 2.0 - 1.0,
     1.0 - screen.y / u_viewport.y * 2.0,
@@ -103,15 +131,19 @@ uniform vec2 u_mouse;
 uniform float u_bend;
 uniform float u_power;
 uniform float u_time;
+uniform vec2 u_origin;
 varying vec2 v_uv;
 varying vec2 v_domWH;
 varying float v_showRatio;
+varying float v_expand;
 float sdRoundedBox(vec2 p, vec2 b, float r) {
   vec2 q = abs(p) - b + r;
   return min(max(q.x, q.y), 0.0) + length(max(q, 0.0)) - r;
 }
 void main() {
-  float d = sdRoundedBox((v_uv - 0.5) * v_domWH, v_domWH * 0.5, u_radius);
+  // The corners square off as the sheet becomes the screen.
+  float radius = u_radius * (1.0 - v_expand);
+  float d = sdRoundedBox((v_uv - 0.5) * v_domWH, v_domWH * 0.5, radius);
   float alpha = clamp(0.5 - d / max(fwidth(d), 1e-4), 0.0, 1.0);
   // The card's own background (CSS radial-gradient, farthest-corner).
   vec2 q = vec2(v_uv.x, 1.0 - v_uv.y);
@@ -124,11 +156,13 @@ void main() {
   vec2 m = vec2(u_mouse.x, 1.0 - u_mouse.y);
   vec2 worldUv = m + (v_uv - m) * (1.0 - 0.05 * u_hover);
   float border = u_hover * min(v_domWH.x, v_domWH.y) * 0.022;
-  float inner = sdRoundedBox((v_uv - 0.5) * v_domWH, v_domWH * 0.5 - border, max(u_radius - border * 0.3, 4.0));
+  float inner = sdRoundedBox((v_uv - 0.5) * v_domWH, v_domWH * 0.5 - border, max(radius - border * 0.3, min(4.0, radius)));
   float inside = clamp(0.5 - inner / max(fwidth(inner), 1e-4), 0.0, 1.0);
   // The world was rendered linear onto transparent black; finish it here.
   // Fast scrolling smears red ahead of blue along the direction of travel.
-  vec2 split = vec2(0.0, u_bend * 0.3 / v_domWH.y);
+  // Opening pulls them apart too, outward from the click, at its fastest.
+  vec2 split = vec2(0.0, u_bend * 0.3 / v_domWH.y) +
+    (v_uv - vec2(u_origin.x, 1.0 - u_origin.y)) * sin(v_expand * 3.14159265) * 0.022;
   vec4 red = texture2D(u_texture, worldUv + split) * inside;
   vec4 green = texture2D(u_texture, worldUv) * inside;
   vec4 blue = texture2D(u_texture, worldUv - split) * inside;
@@ -144,7 +178,7 @@ void main() {
   vec2 fromCentre = (v_uv - 0.5) * v_domWH;
   float rim = exp(min(d, 0.0) / 16.0);
   float pulse = pow(0.5 + 0.5 * sin(atan(fromCentre.y, fromCentre.x) * 2.0 - u_time * 1.4), 8.0);
-  color += vec3(0.3, 0.78, 1.0) * rim * (0.16 + pulse * 0.85) * u_power;
+  color += vec3(0.3, 0.78, 1.0) * rim * (0.16 + pulse * 0.85) * u_power * (1.0 - v_expand);
   vec3 tinted = max(u_tint, vec3(dot(color, vec3(0.299, 0.587, 0.114))));
   gl_FragColor = vec4(mix(tinted, color, v_showRatio), alpha);
 }`;
@@ -185,6 +219,8 @@ export function createProjectSheet(
     u_bend: { value: 0 },
     u_power: { value: 0 },
     u_time: { value: 0 },
+    u_expand: { value: 0 },
+    u_origin: { value: new THREE.Vector2(0.5, 0.5) },
     u_mouse: { value: new THREE.Vector2(0.5, 0.5) },
   };
   const material = new THREE.ShaderMaterial({
@@ -237,7 +273,12 @@ export function createProjectSheet(
       // The reactor's output 0..1 (it lights the card's edge), and seconds.
       power = 0,
       time = 0,
+      // Opening to the whole viewport: how far 0..1, and from where on the
+      // card (0..1, y down).
+      opening = { amount: 0, x: 0.5, y: 0.5 },
     ) {
+      uniforms.u_expand.value = opening.amount;
+      uniforms.u_origin.value.set(opening.x, opening.y);
       uniforms.u_power.value = power;
       uniforms.u_time.value = time;
       uniforms.u_bend.value = bend;

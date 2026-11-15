@@ -13,9 +13,9 @@ export default function SignalJourney() {
       <div className="portal-poster" aria-hidden="true">{Array.from({length:12},(_,i)=><i key={i} style={{width:`${18+i*9}%`,height:`${18+i*9}%`,rotate:`${i*8}deg`}}/>)}</div>
     </div>
     <div className="signal-overlay">
-      <div className="signal-top"><span className="eyebrow">FROM THOUGHT TO IMPACT</span><a href="#contact">Skip to contact ↘</a></div>
-      <div className="signal-copy"><h2 id="signal-title">Follow<br/><em>the signal.</em></h2><p className="signal-arrival" aria-hidden="true">Make it<br/><em>matter.</em></p></div>
-      <div className="signal-bottom"><p>From an idea to a system.<br/>From a system to something useful.</p><div className="signal-modes" role="group" aria-label="Particle formation">{['Tunnel','Orbit'].map((label,i)=><button key={label} aria-pressed={mode===i} onClick={()=>{setMode(i);window.dispatchEvent(new CustomEvent('scene-step',{detail:{id:'portal',step:i}}));}}>{label} <span aria-hidden="true">{i?'◉':'◎'}</span></button>)}</div></div>
+      <div className="signal-top"><span className="eyebrow">BEFORE YOU GO</span><a href="#contact">Skip to contact ↘</a></div>
+      <div className="signal-copy"><h2 id="signal-title">That’s<br/><em>the work.</em></h2><p className="signal-arrival" aria-hidden="true">Now<br/><em>say hello.</em></p></div>
+      <div className="signal-bottom"><p>My email is just below.<br/>Keep scrolling, or skip straight to it.</p><div className="signal-modes" role="group" aria-label="Particle formation">{['Tunnel','Orbit'].map((label,i)=><button key={label} aria-pressed={mode===i} onClick={()=>{setMode(i);window.dispatchEvent(new CustomEvent('scene-step',{detail:{id:'portal',step:i}}));}}>{label} <span aria-hidden="true">{i?'◉':'◎'}</span></button>)}</div></div>
       <div className="signal-meter" aria-hidden="true"><span/></div>
     </div>
   </section>;

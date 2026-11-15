@@ -242,7 +242,7 @@ Modelled on Lusion's reel panel (`ProjectSheet.ts`).
   - Card copy reveals only when the sheet has actually landed (the `data-landed` attribute).
   - If a card's 3D finishes loading while the card is already on screen, it takes over from the poster in place, with no flash.
 - **Hover.** The image zooms slightly toward the cursor inside a thin frame of the card's background. The world camera slides with the mouse for real depth parallax, and the title letters roll.
-- **Click (zoom into the card).** The whole projects section scales around the chosen card until it overfills the screen by 20%, with a cubic ease over 1.15 s. The card's own camera pushes in for a "dive", and its text fades. The final frame is frozen, the case study loads underneath, and the frozen frame fades away.
+- **Click (the card opens).** The card's own sheet bursts open from the point of the click until it is the whole screen (see 7.19). The final frame is frozen, the case study loads underneath, and the frame settles into the slot where that world lives on the page. Cards that are not sheets (the work index, the playground) fall back to the page scaling around the card.
 
 ### 6.5 Mouse trail (screen paint)
 Ported from Lusion's technique (`ScreenPaint.ts`).
@@ -503,6 +503,62 @@ dive with the core off and on, energising, mouse sweeps over the powered
 hero with bloom and trail, and the rest of the page all held 60fps with no
 frame over 17.5ms.
 
+### 7.19 Opening a project (November 2026)
+The click on a home card used to scale the whole section around it: a plain
+zoom, and the sheet's texture was simply magnified. Now the card opens
+itself (`ProjectSheet.ts`, `RouteTransition.tsx`, `lib/zoom.ts`).
+
+- **The burst.** `u_expand` carries every vertex from the card to the
+  viewport. Each sets off once the burst from the click (`u_origin`) reaches
+  it, so the sheet is pulled out by one point and its far edges trail: it
+  bends as it grows, swells past the frame in mid-flight, rolls a little
+  toward the side it was pulled from, and squares its corners as it lands.
+  Its colour channels pull apart outward from the click at its fastest.
+- **The world rushes in.** The card's camera pushes in further than before
+  and takes the screen's aspect as the sheet does. The page does not move.
+- **The copy clears.** Other cards' text steps out of the way and the
+  title rolls off letter by letter.
+- **Arrival.** The frozen full-screen frame closes down onto the case
+  study's visual (a clip-path eased to that slot's rectangle, the image
+  travelling with it) while the title rises in the space it gives up, then
+  fades to the live scene.
+- Opening draws the sheet last and unclipped; a keyboard activation opens
+  from the middle.
+
+### 7.20 Copy rewrite and mobile fit (November 2026)
+- **Copy.** The site's text read as generated: slogan pairs ("Ideas, made
+  real.", "The gym. Connected."), three-part lists, and third-person
+  hedging ("the portfolio describes…", "as documented"). It is now plain
+  first person, and says what each thing is and what I did on it. No fact
+  was added: every claim comes from `CONTENT-SOURCES.md` and the earlier
+  copy. Where something is unknown or unmeasured, the copy says so in one
+  plain sentence. The tests still enforce team credit and pilot wording.
+  - `data/projects.ts`: every field of all five case studies.
+  - `app/page.tsx`: card labels and descriptions, section headings, about,
+    research, experience, contact, footer; the marquee now lists the stack.
+  - Case study headings, the work index, playground, signal scene, header
+    tagline and page descriptions.
+- **Mobile fit.** On a phone the wider worlds (MyGym's modules, VaniCert's
+  waveform) ran past the card's edges. Project cameras now pull back on
+  cards taller than they are wide (`PORTRAIT_SPAN` in `Graphics.tsx`).
+- **No sheet flex on touch.** The scroll-speed bow and colour split are for
+  smoothed scrolling. A touch flick is several times faster and the canvas
+  trails native scroll by a frame, so on phones it read as the picture
+  coming apart. It is now off where the pointer is coarse.
+- The BhashaBuddy title was clipped on phones; it is a little smaller there.
+
+### 7.21 Real product screens (November 2026)
+- `components/ProductShots.tsx` adds a section of real screens to a case
+  study, driven by `shots` in `data/projects.ts`: phone screens in a row
+  that scrolls sideways on narrow screens, or a web page in a browser frame.
+- Images are in `public/shots/`. MyGym's six app screens come from the
+  client pitch deck and show seeded demo data. VaniCert, HealthCareSim and
+  BhashaBuddy were captured from their live sites with popups dismissed.
+- FirstDropAI now links to the live simulator. Catalyst To BeActive is
+  named as the company behind MyGym. MyGym and BhashaBuddy copy follows the
+  deck and the live site. Sources are recorded in `CONTENT-SOURCES.md`.
+- Posture Engine has no public product, so it keeps only the illustration.
+
 ## 8. Bugs found and fixed
 
 | Bug | Cause | Fix |
@@ -526,7 +582,11 @@ frame over 17.5ms.
 | Card landing shape and tint | `ProjectSheet.ts`: the "from" rect in `render()`, `u_tint`, and the `placementWeight` stagger in the vertex shader |
 | Card backgrounds (sheet) | `backgrounds` map in `ProjectSheet.ts` (keep in sync with `.project-*` CSS) |
 | Hover strength | Graphics.tsx sheet branch (camera offsets `1.2` / `0.8`); ProjectSheet fragment (`0.05` zoom, `0.022` frame) |
-| Click-zoom speed and overshoot | `RouteTransition.tsx`: `duration: 1.15`, `* 1.2` fill; dive depth `0.6` in Graphics.tsx |
+| Card opening speed | `run(1.05, "power3.inOut", …)` in `RouteTransition.tsx` |
+| Card opening shape | The `u_expand` block in `ProjectSheet.ts`: stagger (`reach * 0.5`), swell `0.06`, roll `0.03`, fringe `0.022` |
+| How far the world rushes in | `zooming ** 2 * 0.85` in `Graphics.tsx` |
+| Arrival into the case visual | The `settle` timeline in `RouteTransition.tsx` |
+| Fallback page zoom (work index) | `RouteTransition.tsx`: `run(1.15, …)`, `* 1.2` fill; dive `0.6` in `Graphics.tsx` |
 | Mouse trail feel | `settings` in `ScreenPaint.ts` (brush size, `warp`, `band`, `drift`, `rgbSplit`) |
 | Text colour brush | `TRAIL`, `EASE`, `MAX_STAMPS` in `components/TextLens.tsx`; accent per section with `--lens` (CSS) |
 | Reactor light spill | `heroWash`, `rays`, `coreGlow` and point-light values in HeroWorld's `useFrame` |

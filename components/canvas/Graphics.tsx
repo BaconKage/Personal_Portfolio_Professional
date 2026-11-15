@@ -41,6 +41,17 @@ type WorldModule = { default: React.ComponentType<SceneProps> };
 const LANDING_SECONDS = 1.4;
 /** Furthest a sheet's middle trails its edges at full scroll speed, in px. */
 const SHEET_BEND = 26;
+/**
+ * World units a project scene must show across a card that is taller than
+ * it is wide. A wide card fits every world with room to spare; a phone's
+ * card is narrow, and the broader worlds ran off its edges.
+ */
+const PORTRAIT_SPAN: Partial<Record<SceneId, number>> = {
+  mygym: 8.2,
+  vanicert: 8.8,
+  "posture-engine": 8,
+};
+const PORTRAIT_SPAN_DEFAULT = 7.2;
 const loading = new Map<SceneId, Promise<WorldModule>>();
 function preload(id: SceneId) {
   if (!loading.has(id)) loading.set(id, loaders[id]());
@@ -239,6 +250,11 @@ function Renderer({
     return createScreenPaint(gl);
   }, [gl]);
   useEffect(() => () => paint?.dispose(), [paint]);
+  // Sheets flex with scroll speed only where scrolling is smoothed (a mouse
+  // or trackpad). A touch flick is several times faster and the canvas
+  // trails native scrolling by a frame, so on a phone the bow and colour
+  // split read as the picture coming apart, not as a sheet with weight.
+  const flexes = useMemo(() => matchMedia("(pointer: fine)").matches, []);
   // Light from the reactor bleeds past its edges while the core is lit.
   // Desktop only: it costs a framebuffer copy every frame it runs.
   const bloom = useMemo(() => {
@@ -566,17 +582,29 @@ function Renderer({
       }
       if (r.bottom > 0 && r.top < height && r.width > 0 && next.length < 2)
         next.push(s);
-      const aspect = r.width / Math.max(1, r.height);
+      const zooming =
+        projectZoom.element === s.element ? projectZoom.amount : 0;
+      const opens = zooming > 0 && projectZoom.mode === "sheet";
+      // A sheet opening to the whole screen takes the screen's shape with it.
+      const own = r.width / Math.max(1, r.height);
+      const aspect = opens
+        ? own + (width / Math.max(1, height) - own) * zooming
+        : own;
       const distance =
         s.id === "hero"
           ? 9.2
           : s.id === "playground"
             ? 12
-            : Math.max(10, 6.4 / (2 * Math.tan(Math.PI / 10) * aspect));
-      // The card being zoomed into pushes its own camera in: a dive into
-      // the world while the page zooms around it.
-      const dive =
-        projectZoom.element === s.element ? projectZoom.amount ** 2 * 0.6 : 0;
+            : Math.max(
+                10,
+                (aspect < 1
+                  ? (PORTRAIT_SPAN[s.id] ?? PORTRAIT_SPAN_DEFAULT)
+                  : 6.4) /
+                  (2 * Math.tan(Math.PI / 10) * aspect),
+              );
+      // The card being opened pushes its own camera in: a dive into its
+      // world as the sheet grows (or as the page zooms around it).
+      const dive = zooming ** 2 * (opens ? 0.85 : 0.6);
       if (
         s.camera.aspect !== aspect ||
         s.camera.position.z !== distance ||
@@ -651,7 +679,11 @@ function Renderer({
     gl.clear(true, true, true);
     gl.autoClear = false;
     const height = measuring.current.height || innerHeight;
-    for (const s of active.current) {
+    // A sheet that is opening covers everything: it is drawn last.
+    let order = active.current;
+    if (order.length > 1 && order[0].element === projectZoom.element)
+      order = [order[1], order[0]];
+    for (const s of order) {
       const r = s.layout.rect,
         clip = s.layout.clip;
       if (!s.ready || !r || r.width < 1 || r.height < 1) continue;
@@ -698,7 +730,9 @@ function Renderer({
             : 0;
         land.top = r.top;
         land.velocity = THREE.MathUtils.damp(land.velocity, speed, 9, dt);
-        const bend = SHEET_BEND * Math.tanh(land.velocity / 2600);
+        const bend = flexes
+          ? SHEET_BEND * Math.tanh(land.velocity / 2600)
+          : 0;
         land.seen = now;
         land.frame = frame;
         const diff = target - land.shown;
@@ -742,10 +776,15 @@ function Renderer({
         s.camera.updateMatrixWorld();
         if (ratio < 0.004) continue;
         const width = state.size.width;
-        const cl = Math.max(0, clip?.left ?? 0),
-          cr = Math.min(width, clip?.right ?? width),
-          ct = Math.max(0, clip?.top ?? 0),
-          cb = Math.min(height, clip?.bottom ?? height);
+        // Opening, the sheet leaves its section: nothing clips it.
+        const opening =
+          projectZoom.mode === "sheet" && projectZoom.element === s.element
+            ? projectZoom.amount
+            : 0;
+        const cl = opening ? 0 : Math.max(0, clip?.left ?? 0),
+          cr = opening ? width : Math.min(width, clip?.right ?? width),
+          ct = opening ? 0 : Math.max(0, clip?.top ?? 0),
+          cb = opening ? height : Math.min(height, clip?.bottom ?? height);
         if (cr <= cl || cb <= ct) continue;
         gl.setViewport(0, 0, width, height);
         gl.setScissor(cl, height - cb, cr - cl, cb - ct);
@@ -763,6 +802,11 @@ function Renderer({
             bend,
             power,
             (now / 1000) % 3600,
+            {
+              amount: opening,
+              x: projectZoom.origin.x,
+              y: projectZoom.origin.y,
+            },
           );
           if (s.element.dataset.ready !== "true") {
             // The sheet now paints the card; the DOM card steps aside.
@@ -819,7 +863,7 @@ function Renderer({
       }
     }
     gl.setScissorTest(false);
-    if (innerWidth >= 768)
+    if (innerWidth >= 768 && !projectZoom.element)
       for (let i = 0; i < projects.length - 1; i++) {
         const seam = projects[i + 1].layout.rect?.top;
         if (seam === undefined) continue;

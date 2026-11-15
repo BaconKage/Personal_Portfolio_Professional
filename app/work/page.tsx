@@ -27,15 +27,16 @@ export default function Work() {
     <>
       <main id="main" className="work-index">
         <div className="index-heading">
-          <span className="eyebrow">THE WORK / 2025 — 2026</span>
+          <span className="eyebrow">WORK / 2025 — 2026</span>
           <h1>
-            Built around
+            Five projects
             <br />
-            <span>real problems.</span>
+            <span>I’ve worked on.</span>
           </h1>
           <p>
-            Five different systems.
-            <br />A closer look at how they work.
+            Each one has a write-up:
+            <br />
+            what it does and what I built.
           </p>
         </div>
         <div className="work-list">

@@ -20,21 +20,42 @@ export type Project = {
   challenge: string;
   result: string;
   diagram: { nodes: string[]; caption: string };
+  /** Real screens from the product, shown on its case study. */
+  shots?: Shot[];
+  /** One line on where the screens come from. */
+  shotsNote?: string;
 };
+export type Shot = {
+  src: string;
+  width: number;
+  height: number;
+  kind: "phone" | "web";
+  alt: string;
+  label: string;
+  caption: string;
+  /** The page's address, shown in the browser frame of a web shot. */
+  address?: string;
+};
+/*
+ * Written in the first person and kept to what is known. Where something
+ * has not been measured or is not public (accuracy figures, a production
+ * rollout, who owns which component), the copy says so plainly instead of
+ * implying it. See CONTENT-SOURCES.md for the evidence behind each claim.
+ */
 export const projects: Project[] = [
   {
     slug: "mygym",
     title: "MyGym",
-    descriptor: "Gym Operating System",
+    descriptor: "Gym management platform",
     category: "FULL-STACK PLATFORM",
     number: "01",
     year: "2026",
-    hook: "One member.\nOne connected system.",
+    hook: "Gyms run on handovers,\nand handovers lose things.",
     summary:
-      "A gym operating platform that connects the entire member lifecycle, from the first enquiry to coaching and progress.",
-    role: "Full-Stack Developer",
+      "A platform that runs a gym’s whole member journey, from the first enquiry through to coaching and progress.",
+    role: "Full-stack developer",
     team: "Team of three",
-    status: "Client demonstration complete · Preparing for controlled pilot",
+    status: "Demoed to a first client · Getting ready for a pilot",
     stack: [
       "Next.js",
       "Expo / React Native",
@@ -43,35 +64,35 @@ export const projects: Project[] = [
       "Prisma",
       "TypeScript",
     ],
-    link: { label: "Visit product website", url: "https://mygym.co.in" },
+    link: { label: "Visit mygym.co.in", url: "https://mygym.co.in" },
     context:
-      "A gym is a collection of handovers. Someone enquires, speaks to sales, buys a package, pays, and starts working with a coach. MyGym brings those handovers into one operating platform.",
+      "A new member passes through a lot of hands before their first workout. A DM or a walk-in becomes a lead, then a consult, a sale, member setup, coaching and weekly check-ins. MyGym puts all of those steps in one system.",
     problem:
-      "When leads, consultations, payments, and workout plans live in disconnected tools, the member’s context gets lost. Staff end up copying information rather than acting on it. The challenge is keeping the person connected to every stage.",
+      "When leads, consultations, payments and workout plans sit in separate tools, the member’s history doesn’t travel with them. Staff end up copying details from one place to another when they could be acting on them. We wanted the person to stay connected to every stage.",
     contribution:
-      "I am a core developer in a team of three. My documented work includes member and trainer dashboards, attendance and reporting, workout validation, conversational assistants, and diet planning. The current operating platform is a team delivery; its architecture is described here as the system we built, without attributing every component to me alone.",
+      "I’m one of three developers on MyGym. My part covers the member and trainer dashboards, attendance and reporting, workout validation, the chat assistants and diet planning. The platform as a whole is a team effort, so the architecture on this page is what we built together. I’m not claiming every piece of it as mine.",
     decisions: [
       {
-        title: "A lifecycle, not a collection of forms.",
-        body: "Enquiry, consultation, sale, payment, onboarding, coaching, and progress share linked domain records. A coach receives the context of the actual sale rather than a second copy of it.",
+        title: "One record follows the member",
+        body: "Enquiry, consultation, sale, payment, onboarding, coaching and progress are linked records in the same database. When a coach opens a new member, they see the sale that was actually made. Nobody has to retype it.",
       },
       {
-        title: "One authority. Two clients.",
-        body: "The Next.js web console and Expo mobile application use a NestJS API that owns business rules and permissions. PostgreSQL and Prisma support the connected domain model. The clients do not independently decide what is allowed.",
+        title: "The API decides what’s allowed",
+        body: "The web app for the front desk is Next.js, and the Android and iPhone apps are Expo. They all talk to one NestJS API, and that API owns the business rules and permissions. No client gets to decide on its own what a user can do. PostgreSQL and Prisma sit underneath.",
       },
       {
-        title: "Different workspaces. Shared facts.",
-        body: "Sales, finance, coaches, members, and managers see the parts of the lifecycle relevant to their responsibilities. Role boundaries are part of the system rather than a visual filter on a universal dashboard.",
+        title: "Each role gets its own workspace",
+        body: "Owners, front-desk staff, coaches and members each see their own part of the journey. An owner gets sales and payments at a glance, and a member gets their plan and their coach’s replies. The system enforces those boundaries. We didn’t build one big dashboard and hide parts of it.",
       },
       {
-        title: "A visible failure beats a wrong number.",
-        body: "Runtime validation rejects malformed responses. Request tracking and cancellation prevent a delayed response for one member from appearing after the interface switches to another. Correctness matters most where the information affects payments and people.",
+        title: "Fail loudly before showing a wrong number",
+        body: "Responses are validated at runtime and malformed ones are rejected. Requests are tracked and cancelled, so a slow response for one member can’t turn up after you’ve switched to another. That matters most on the screens that deal with payments.",
       },
     ],
     challenge:
-      "The difficult part was preserving trust between views of the same person. A screen can look correct while showing a stale response or an invalid value. The implementation addresses those failure modes explicitly instead of treating a successful request as sufficient evidence of correctness.",
+      "The hard part was keeping every view of the same person trustworthy. A screen can look fine while it’s showing stale data, or a value that should never have got through. A request coming back successfully isn’t proof the data is right, so we handle those cases on purpose.",
     result:
-      "The web application, mobile application, API, database, seeded demonstration data, and automated tests were demonstrated end to end to a prospective first client. The documented next step is hardening for a controlled pilot. A successful demonstration is not presented as proof of a production rollout.",
+      "We demoed the whole thing end to end to a prospective first client: web app, mobile app, API, database, seeded demo data and automated tests. Next is hardening it for a controlled pilot. It isn’t in production yet, and I don’t want this page to suggest it is.",
     diagram: {
       nodes: [
         "Web console / Next.js",
@@ -80,47 +101,93 @@ export const projects: Project[] = [
         "Linked records / PostgreSQL + Prisma",
       ],
       caption:
-        "Web and mobile clients share one API for rules and permissions, backed by a connected relational database.",
+        "The web and mobile apps share one API for rules and permissions, on top of a relational database.",
     },
+    shotsNote:
+      "From the mobile app, running on seeded demo data. The names and figures aren’t real customers.",
+    shots: [
+      {
+        src: "/shots/mygym-owner-overview.webp",
+        width: 760, height: 1646, kind: "phone",
+        alt: "MyGym owner overview listing how many people are at each stage, from new lead to joined.",
+        label: "Owner",
+        caption: "How sales are going, stage by stage.",
+      },
+      {
+        src: "/shots/mygym-owner-payments.webp",
+        width: 760, height: 1646, kind: "phone",
+        alt: "MyGym payments screen showing the amount sold, how much is paid and how much is still owed, with a list of sales.",
+        label: "Owner",
+        caption: "What’s paid and what’s still owed.",
+      },
+      {
+        src: "/shots/mygym-front-desk.webp",
+        width: 760, height: 1646, kind: "phone",
+        alt: "MyGym front desk home with buttons to add a lead or book a consult, and a list of follow-ups that need attention.",
+        label: "Front desk",
+        caption: "Today’s follow-ups and bookings.",
+      },
+      {
+        src: "/shots/mygym-coach-reviews.webp",
+        width: 760, height: 1646, kind: "phone",
+        alt: "MyGym coach reviews screen listing member check-ins and form questions waiting for a reply.",
+        label: "Coach",
+        caption: "Check-ins and form questions to review.",
+      },
+      {
+        src: "/shots/mygym-member-today.webp",
+        width: 760, height: 1646, kind: "phone",
+        alt: "MyGym member home screen with today’s stats and the current workout plan.",
+        label: "Member",
+        caption: "Today’s snapshot and workout.",
+      },
+      {
+        src: "/shots/mygym-member-plan.webp",
+        width: 760, height: 1646, kind: "phone",
+        alt: "MyGym member plan screen showing a three-day strength plan with exercises, sets and notes.",
+        label: "Member",
+        caption: "The plan, with a button to ask the coach.",
+      },
+    ],
   },
   {
     slug: "vanicert",
     title: "VaniCert",
-    descriptor: "Voice Authenticity Detection",
+    descriptor: "Voice deepfake detection",
     category: "APPLIED AI · AUDIO",
     number: "02",
-    hook: "A voice is a signal.\nTrust takes more.",
+    hook: "A cloned voice sounds\nlike the real one.",
     summary:
-      "Voice deepfake detection combining neural anti-spoofing analysis with classical signal processing.",
+      "A tool that checks whether a voice recording is real or AI-generated, using a neural anti-spoofing model alongside classical signal processing.",
     role: "Contributing engineer",
     team: "Shubhang Varda · Saran Chekka · Tamish Sridatta Billa",
-    status: "Public analyzer available",
+    status: "Public analyser is live",
     stack: ["FastAPI", "AASIST", "Silero VAD", "Modal GPU", "DSP"],
     link: { label: "Open VaniCert", url: "https://vanicert.vercel.app" },
     context:
-      "Cloned speech makes a familiar voice an unreliable signal of authenticity. VaniCert analyses an audio sample and returns a classification with supporting information.",
+      "Voice cloning is good enough now that recognising someone’s voice no longer tells you it’s them. VaniCert takes an audio sample and returns a verdict, with the information that supports it.",
     problem:
-      "An audio file can contain silence, background noise, and different stretches of speech. Looking only at a superficial sample can miss relevant detail. The pipeline is designed around isolating speech and comparing more than one analytical signal.",
+      "Real recordings are messy. There’s silence, background noise, and speech in separate stretches. If you only look at a small sample you can miss the part that matters. So the pipeline finds the speech first, then checks it in more than one way.",
     contribution:
-      "I contributed to VaniCert alongside Saran Chekka and Tamish Sridatta Billa, both credited on the live project. The public portfolio documents the overall pipeline but does not divide individual component ownership, so this case study describes the team’s system.",
+      "I worked on VaniCert with Saran Chekka and Tamish Sridatta Billa, and all three of us are credited on the live site. We haven’t published who owns which component, so what I describe here is the team’s system.",
     decisions: [
       {
-        title: "Start with speech.",
-        body: "Silero VAD isolates speech across the input stream before downstream analysis. This separates the material of interest from silence and non-speech segments.",
+        title: "Find the speech first",
+        body: "Silero VAD runs over the whole recording and picks out the stretches of speech. Everything after that works on speech only, with the silence and non-speech segments set aside.",
       },
       {
-        title: "Compare different kinds of evidence.",
-        body: "AASIST provides a neural anti-spoofing signal. Classical DSP checks examine features including MFCCs, spectral centroid, and spectral flux. The documented consensus approach brings these analyses together before returning a verdict.",
+        title: "Two kinds of evidence",
+        body: "AASIST gives a neural anti-spoofing signal. Separately, classical DSP checks look at features like MFCCs, spectral centroid and spectral flux. The two are brought together into a consensus before a verdict comes back.",
       },
       {
-        title: "Put the workload where it belongs.",
-        body: "FastAPI exposes the analysis interface, with GPU-backed execution on Modal. This keeps intensive model inference outside the browser.",
+        title: "The model runs on a GPU server",
+        body: "FastAPI exposes the analysis endpoint and the model runs on GPUs through Modal. None of the heavy inference happens in your browser.",
       },
     ],
     challenge:
-      "Inspecting a full stream has a cost. The live project explicitly acknowledges cold starts and longer processing for lengthy recordings. The engineering tradeoff is coverage of the recording rather than the appearance of an instantaneous response.",
+      "Analysing the full recording takes time. The live site says so up front: there are cold starts, and long recordings take longer. We chose to cover the whole recording even though it means the answer isn’t instant.",
     result:
-      "A public analyzer is available. This portfolio makes no accuracy, latency, or false-positive claims without a published evaluation. The waveform artwork is a conceptual view of the pipeline, not an inference result.",
+      "The analyser is public and you can try it. We haven’t published an evaluation, so I’m not quoting accuracy, latency or false-positive numbers. The waveform on this page is an illustration of the pipeline. It isn’t output from the model.",
     diagram: {
       nodes: [
         "Audio stream",
@@ -129,22 +196,32 @@ export const projects: Project[] = [
         "Consensus / Classification",
       ],
       caption:
-        "Speech isolation feeds neural and DSP analysis, which inform the final classification.",
+        "Speech is isolated first, then analysed by the neural model and the DSP checks, which together inform the verdict.",
     },
+    shots: [
+      {
+        src: "/shots/vanicert.webp",
+        width: 1920, height: 1200, kind: "web",
+        address: "vanicert.vercel.app",
+        alt: "The VaniCert home page, headed Separate Real Voices From Synthetic Clones, with a button to launch the analyser.",
+        label: "Home page",
+        caption: "The analyser is one click from here.",
+      },
+    ],
   },
   {
     slug: "firstdrop-ai",
     title: "FirstDropAI",
-    descriptor: "HealthCareSim · Clinical Communication",
+    descriptor: "HealthCareSim · Clinical communication",
     category: "CONVERSATIONAL AI",
     number: "03",
     year: "2026",
-    hook: "Rehearse the conversation.\nBefore it matters.",
+    hook: "Hard conversations\nneed rehearsal too.",
     summary:
-      "An AI clinical communication simulator for practising difficult conversations in Indian healthcare settings.",
+      "A simulator where trainee doctors practise difficult conversations with AI patients, families and nurses, set in Indian healthcare.",
     role: "Technology Consultant · First Drop Theatre",
-    team: "Solo build, as documented",
-    status: "Built for First Drop Theatre",
+    team: "Solo build",
+    status: "Built for First Drop Theatre · Live",
     stack: [
       "Next.js",
       "TypeScript",
@@ -154,33 +231,33 @@ export const projects: Project[] = [
       "Prompt design",
     ],
     link: {
-      label: "Visit First Drop Theatre",
-      url: "https://firstdroptheatre.com",
+      label: "Open HealthCareSim",
+      url: "https://health-care-sim.vercel.app",
     },
     context:
-      "Clinical knowledge and communication are different skills. HealthCareSim gives trainee doctors a roleplay environment with simulated patients, family members, and nurses.",
+      "Knowing the medicine and being able to talk to a frightened family are different skills. HealthCareSim gives trainee doctors somewhere to practise the second one, through roleplay with simulated patients, family members and nurses.",
     problem:
-      "A difficult conversation does not follow a tidy question-and-answer script. Emotion, tension, language, and family dynamics affect what happens next. A useful rehearsal needs to respond to those pressures.",
+      "A difficult conversation doesn’t follow a script. Emotion, tension, language and family dynamics all change what happens next. For the practice to be worth anything, the simulation has to react to those things.",
     contribution:
-      "I engineered scenario generation, the conversational simulation flow, voice input and output, and feedback reports covering empathy, clarity, listening, and composure. The work is documented as a solo build in my role at First Drop Theatre.",
+      "I built this on my own, as Technology Consultant at First Drop Theatre. That covers scenario generation, the conversation flow, voice input and output, and a feedback report on empathy, clarity, listening and handling pressure.",
     decisions: [
       {
-        title: "Give the conversation a context.",
-        body: "Generated scenarios set up the people and situation before the roleplay begins. Prompt design focuses on clinical realism and Indian settings, rather than a uniformly agreeable chatbot.",
+        title: "Set the scene before anyone speaks",
+        body: "You start from one rough idea: the patient, the pressure point and the skill you want to practise. The app turns that into a structured brief you can edit before you begin. I wrote the prompts for clinical realism in Indian settings. A chatbot that agrees with everything would be no use here.",
       },
       {
-        title: "Let the room react.",
-        body: "The simulation tracks conversational tension and uses the evolving exchange to shape its responses. Patients, families, and nurses have different roles within the scenario.",
+        title: "The room reacts to what you say",
+        body: "The simulation keeps track of how tense the conversation is and uses that to shape the next response. Patients, family members and nurses each play a different part in the scenario.",
       },
       {
-        title: "Close the rehearsal loop.",
-        body: "Voice interaction supports spoken practice. A session report provides feedback on the communication dimensions documented in the project, turning an exchange into something the trainee can reflect on.",
+        title: "End with something to reflect on",
+        body: "You can dictate your replies and have the messages read aloud, so the practice can be spoken like the real thing. Afterwards you get scored feedback on how you communicated, which gives the trainee something specific to think about.",
       },
     ],
     challenge:
-      "The challenge is conversational credibility: creating an exchange with pressure and changing dynamics while keeping the scenario coherent. The project’s feedback is part of a practice tool; no clinical validation or improvement in patient outcomes is claimed here.",
+      "The hard part is making the conversation believable. It needs pressure and shifting dynamics, and it still has to hold together as one scenario. The feedback is for practice. It hasn’t been clinically validated and I’m not claiming it improves patient outcomes.",
     result:
-      "The documented build includes scenario generation, roleplay, voice interaction, and session feedback. The external link leads to First Drop Theatre, the organisation, because a public simulator URL has not been supplied.",
+      "It’s live and runs in the browser with no sign-up. The whole app also works in Hindi. It’s a training simulation only, and says so on the page: it isn’t for diagnosis or treatment.",
     diagram: {
       nodes: [
         "Scenario / People & context",
@@ -189,49 +266,60 @@ export const projects: Project[] = [
         "Reflection / Session report",
       ],
       caption:
-        "A scenario frames the conversation; tension informs the exchange; the session ends with structured feedback.",
+        "A scenario sets up the conversation, tension shapes how it goes, and a report closes the session.",
     },
+    shots: [
+      {
+        src: "/shots/healthcaresim.webp",
+        width: 1920, height: 1200, kind: "web",
+        address: "health-care-sim.vercel.app",
+        alt: "The HealthCareSim start page, headed A training room for difficult conversations, with a sample exchange between a family member and a trainee.",
+        label: "Start page",
+        caption:
+          "A sample roleplay on the right, and the four skills it trains below.",
+      },
+    ],
   },
   {
     slug: "bhashabuddy",
     title: "BhashaBuddy",
-    descriptor: "Mother-Tongue Learning",
+    descriptor: "Mother-tongue learning",
     category: "LANGUAGE · LEARNING",
     number: "04",
-    hook: "A language can feel\nlike coming home.",
+    hook: "A family language is easy\nto lose growing up abroad.",
     summary:
-      "An interactive language-learning app for children growing up away from their family’s mother tongue.",
+      "A language-learning app for children growing up away from the language their family speaks.",
     role: "Product engineering",
-    status: "Public application available",
+    status: "Live on the web",
     stack: ["React", "Vite", "Supabase", "OpenAI API", "Text-to-speech"],
     link: {
       label: "Open BhashaBuddy",
       url: "https://parampara-one.vercel.app/",
     },
     context:
-      "For children growing up abroad, a family language connects everyday words to people, stories, and culture. BhashaBuddy brings practice into an approachable digital environment.",
+      "For a child growing up abroad, the family language is the way into the people, stories and culture that come with it. BhashaBuddy gives them a friendly place to practise.",
     problem:
-      "The difficult part is sustaining attention and making practice feel inviting. A child needs more than a vocabulary list; the product combines stories, games, conversation, and pronunciation feedback.",
+      "With young children the hard part is attention. A vocabulary list won’t hold it. So the app mixes stories, games, conversation and pronunciation feedback.",
     contribution:
-      "My portfolio includes BhashaBuddy as product work across interactive learning and AI-supported language practice. The available source does not specify team size or individual feature ownership, so those details are not inferred.",
+      "I worked on BhashaBuddy as a product engineer, on the interactive learning side and the AI-supported language practice.",
     decisions: [
       {
-        title: "More than one way to practise.",
-        body: "Stories, word games, and conversation offer different paths into language practice. The interface centres activities rather than exposing the underlying model tools.",
+        title: "Several ways in",
+        body: "There are four activities: lessons built from YouTube videos, a voice coach, a story builder and word games. Each gives a child a different way to practise. The screen shows activities. The AI tools underneath stay out of sight.",
       },
       {
-        title: "Bring language into the exchange.",
-        body: "AI conversation and speech features support practice in the family’s language. The public application exposes Hindi, Tamil, Telugu, and Kannada among its language choices.",
+        title: "Practice in the family’s own language",
+        body: "The voice coach listens as the child speaks and scores their pronunciation. The story builder writes a story from any idea, with a comprehension quiz at the end. The live app offers Hindi, Tamil, Telugu, Kannada, Malayalam and English.",
       },
       {
-        title: "Connect practice and progress.",
-        body: "Supabase supports the application’s data layer, while AI and speech services support the learning activities. The live product also provides a parent-facing view of practice.",
+        title: "Parents can see how it’s going",
+        body: "Supabase handles the data, and AI and speech services run the activities. A parent dashboard shows daily minutes, skill scores and a weekly report written by AI.",
       },
     ],
     challenge:
-      "The portfolio describes the main challenge as pedagogical: keeping a young child engaged. This case study does not turn that design intent into an unsupported learning-outcome or retention claim.",
+      "The main challenge is a teaching one: keeping a young child engaged. That’s what the design is aiming for. I don’t have data on learning outcomes or retention, so I’m not making claims about either.",
     result:
-      "The application is publicly accessible on Vercel. The visual world here uses language characters as artwork; it does not reproduce product UI or manufacture example assessment results.",
+      "The app is live on Vercel. The artwork on this page uses letters from the languages as decoration. It isn’t a screenshot of the product.",
     diagram: {
       nodes: [
         "Stories & games",
@@ -240,8 +328,18 @@ export const projects: Project[] = [
         "Progress / Parent view",
       ],
       caption:
-        "Different learning activities connect to speech practice and a view of progress.",
+        "The learning activities connect to speech practice and to a view of progress.",
     },
+    shots: [
+      {
+        src: "/shots/bhashabuddy.webp",
+        width: 1920, height: 1200, kind: "web",
+        address: "parampara-one.vercel.app",
+        alt: "The BhashaBuddy home page, headed Language feels like a friend, with language choices and a story player showing a story in Tamil.",
+        label: "Home page",
+        caption: "The story player on the right is reading a story in Tamil.",
+      },
+    ],
   },
   {
     slug: "posture-engine",
@@ -250,37 +348,37 @@ export const projects: Project[] = [
     category: "COMPUTER VISION",
     number: "05",
     year: "JUN 2025 — JAN 2026",
-    hook: "Movement becomes\nuseful feedback.",
+    hook: "A rep count doesn’t say\nif the form was right.",
     summary:
-      "Workout validation through pose estimation, alongside AI-assisted diet planning grounded in Indian food data.",
+      "Pose estimation that checks workout form and counts reps, plus an AI diet planner built on Indian food data.",
     role: "Full-stack & AI engineering",
-    team: "Solo contribution within MyGym",
-    status: "Documented MyGym feature work",
+    team: "Solo, within MyGym",
+    status: "Feature work for MyGym",
     stack: ["React", "Flask", "MediaPipe", "OpenCV", "MongoDB Atlas", "Figma"],
     context:
-      "This work sits inside the wider MyGym product: helping members and trainers understand movement, count repetitions, and work with personalised food plans.",
+      "This is work I did inside MyGym. It helps members and trainers understand movement, count repetitions, and work with food plans made for the person.",
     problem:
-      "A repetition count alone says little about form. Meanwhile, useful diet planning needs to consider goals, allergies, and familiar foods. These are two distinct product needs within the same fitness experience.",
+      "Counting reps tells you very little about form. And a diet plan is only useful if it accounts for the person’s goals, their allergies, and food they’re used to eating. These are two separate needs that happen to live in the same fitness app.",
     contribution:
-      "I solo-built the posture validation engine, diet planner, and an in-app assistant. The documented work also includes redesigning dashboards, trainer pages, and live-session screens.",
+      "I built the posture validation engine, the diet planner and an in-app assistant on my own. I also redesigned the dashboards, trainer pages and live-session screens.",
     decisions: [
       {
-        title: "Turn landmarks into feedback.",
-        body: "MediaPipe and OpenCV provide pose estimation and joint tracking. Joint angles and movement phases support repetition counting and form feedback.",
+        title: "From landmarks to feedback",
+        body: "MediaPipe and OpenCV estimate the pose and track the joints. Joint angles and movement phases then give the rep count and the form feedback.",
       },
       {
-        title: "Keep diet inputs grounded.",
-        body: "The diet engine works with goals, allergies, and an Indian food database. It is presented as a separate planning capability rather than a direct output of the pose model.",
+        title: "Diet planning from real inputs",
+        body: "The diet engine works from the person’s goals, their allergies and an Indian food database. It’s a separate feature from the pose model.",
       },
       {
-        title: "Make the results usable.",
-        body: "React interfaces, Flask services, and MongoDB support the feature work. Dashboard and live-session design connect the underlying capabilities to member and trainer tasks.",
+        title: "Screens people can use",
+        body: "The interfaces are React, the services are Flask, and the data is in MongoDB. The dashboards and live-session screens are where members and trainers meet these features.",
       },
     ],
     challenge:
-      "The project combines real-time visual feedback with ordinary product interfaces. This portfolio illustrates joint geometry using scripted poses; it does not request camera access or claim those illustrations are live model detections.",
+      "This project puts real-time visual feedback next to ordinary app screens. The poses on this page are scripted illustrations. The page doesn’t ask for your camera, and what you see isn’t live model output.",
     result:
-      "The work is documented for June 2025–January 2026 as part of MyGym. There is no separate public deployment linked in the original portfolio. No fitness, nutrition, or model-accuracy outcome is asserted.",
+      "I worked on this from June 2025 to January 2026 as part of MyGym. It doesn’t have its own public deployment. I’m not making claims here about fitness results, nutrition results or model accuracy.",
     diagram: {
       nodes: [
         "Camera / Frames",
@@ -289,7 +387,7 @@ export const projects: Project[] = [
         "Movement phases / Repetitions",
       ],
       caption:
-        "The posture pipeline derives joint and repetition feedback from estimated landmarks. Diet planning is a separate capability using goals, allergies, and food data.",
+        "Camera frames become landmarks, landmarks become joint angles, and those give form feedback and rep counts. Diet planning is separate and works from goals, allergies and food data.",
     },
   },
 ];

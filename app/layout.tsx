@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     template: "%s — Shubhang Srinivas Varda",
   },
   description:
-    "Full-stack products, applied AI, and thoughtful digital experiences. Selected engineering work by Shubhang Srinivas Varda, Bengaluru.",
+    "Portfolio of Shubhang Srinivas Varda, a full-stack and AI engineer in Bengaluru. Projects in gym software, voice deepfake detection, clinical communication training and language learning.",
   robots: { index: indexable, follow: indexable },
   openGraph: { type: "website", siteName: profile.name, locale: "en_IN" },
   twitter: { card: "summary_large_image" },

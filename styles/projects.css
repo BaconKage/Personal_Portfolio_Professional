@@ -546,3 +546,124 @@
     font-size: 23px;
   }
 }
+
+/* ─── Real product screens on a case study (ProductShots) ─── */
+.case-shots {
+  padding: 85px var(--gutter) 20px;
+}
+.case-shots-head {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 70px;
+  margin-bottom: 46px;
+}
+.case-shots-head .eyebrow {
+  color: var(--muted);
+}
+.case-shots-head h2 {
+  font-size: clamp(36px, 4.2vw, 62px);
+  font-weight: 450;
+  letter-spacing: -0.06em;
+  line-height: 1.08;
+}
+.case-shots-head p {
+  max-width: 520px;
+  margin-top: 18px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.shot-row {
+  display: grid;
+  gap: 22px;
+}
+.shot {
+  margin: 0;
+}
+.shot-frame {
+  overflow: hidden;
+  background: #fff;
+}
+.shot-frame img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.shot figcaption {
+  margin-top: 14px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.shot figcaption b {
+  display: block;
+  font-weight: 500;
+  color: var(--ink);
+}
+/* Phones: one row, as many as fit; it scrolls sideways when they don't. */
+.shot-phones {
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(170px, 1fr);
+  overflow-x: auto;
+  padding-bottom: 14px;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+}
+.shot-phone {
+  scroll-snap-align: start;
+}
+.shot-phone .shot-frame {
+  border: 6px solid #0d1220;
+  border-radius: 26px;
+  background: #0d1220;
+  box-shadow: 0 26px 60px -34px #0d122080;
+}
+.shot-phone .shot-frame img {
+  border-radius: 20px;
+}
+/* A web page: a plain browser frame with its address. */
+.shot-web .shot-frame {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 30px 70px -44px #0d122080;
+}
+.shot-bar {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 11px 14px;
+  background: #e9e8e2;
+  border-bottom: 1px solid var(--line);
+  font:
+    11px var(--font-mono),
+    monospace;
+  color: var(--muted);
+}
+.shot-bar span {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #c9c8c0;
+}
+.shot-bar b {
+  margin-left: 10px;
+  font-weight: 400;
+}
+@media (max-width: 767px) {
+  .case-shots {
+    padding: 60px 20px 10px;
+  }
+  .case-shots-head {
+    display: block;
+    margin-bottom: 30px;
+  }
+  .case-shots-head h2 {
+    margin-top: 18px;
+    font-size: 38px;
+  }
+  .shot-phones {
+    grid-auto-columns: 62vw;
+    margin-right: -20px;
+    padding-right: 20px;
+  }
+}
